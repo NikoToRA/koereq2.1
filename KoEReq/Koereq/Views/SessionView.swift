@@ -27,7 +27,6 @@ struct SessionView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var lastAIResponse = ""
-    @State private var inactivityTimer: Timer?
     
     @Environment(\.dismiss) private var dismiss
     
@@ -75,7 +74,10 @@ struct SessionView: View {
         .navigationBarHidden(true)
         .onAppear {
             setupSession()
-            startInactivityTimer()
+        }
+        .onChange(of: activeSession?.id) {
+            // セッションが変更された際にチャットメッセージを再読み込み
+            loadChatMessages()
         }
         .onDisappear {
             endSession()
@@ -340,8 +342,6 @@ struct SessionView: View {
     }
     
     private func toggleRecording() {
-        resetInactivityTimer()
-        
         if recordingService.isRecording {
             stopRecording()
         } else {
@@ -391,7 +391,6 @@ struct SessionView: View {
     }
     
     private func togglePromptSelector() {
-        resetInactivityTimer()
         withAnimation(.easeInOut(duration: 0.3)) {
             showingPromptSelector.toggle()
         }
@@ -451,7 +450,6 @@ struct SessionView: View {
     }
     
     private func endSession() {
-        inactivityTimer?.invalidate()
         sessionStore.endCurrentSession()
         
         // Azure Blob Storageアップロード（現在は無効化済み - 24時間ローカルキャッシュを使用）
@@ -465,19 +463,6 @@ struct SessionView: View {
                 }
             }
         }
-    }
-    
-    private func startInactivityTimer() {
-        inactivityTimer = Timer.scheduledTimer(withTimeInterval: 1800, repeats: false) { _ in
-            // 30分無操作で自動終了
-            endSession()
-            dismiss()
-        }
-    }
-    
-    private func resetInactivityTimer() {
-        inactivityTimer?.invalidate()
-        startInactivityTimer()
     }
     
     private func formatSessionTime() -> String {
@@ -693,20 +678,45 @@ struct MedicalGuideOverlay: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // 半透明背景（フッター部分を除外）
-                VStack(spacing: 0) {
-                    Color.black.opacity(0.3)
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isShowing = false
-                            }
+                // 全画面の半透明背景（タップ＆スワイプ対応）
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea(.all)
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            isShowing = false
                         }
-                    
-                    // フッター部分は背景を適用しない
-                    Color.clear
-                        .frame(height: 120)
-                }
-                .ignoresSafeArea()
+                    }
+                    .gesture(
+                        // 背景での左右スワイプジェスチャー
+                        DragGesture()
+                            .onChanged { value in
+                                // 左右スワイプの場合のみ反応
+                                if abs(value.translation.width) > abs(value.translation.height) {
+                                    dragOffset = value.translation.width
+                                }
+                            }
+                            .onEnded { value in
+                                let horizontalDistance = value.translation.width
+                                let horizontalVelocity = abs(value.velocity.width)
+                                
+                                // 左右スワイプで消える（背景でも反応）
+                                if abs(horizontalDistance) > 80 || horizontalVelocity > 400 {
+                                    // ハプティクフィードバック
+                                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                                    impact.impactOccurred()
+                                    
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        isShowing = false
+                                        dragOffset = 0
+                                    }
+                                } else {
+                                    // 元の位置に戻る
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        dragOffset = 0
+                                    }
+                                }
+                            }
+                    )
                 
                 // メインオーバーレイ
                 VStack(spacing: 0) {
@@ -735,25 +745,67 @@ struct MedicalGuideOverlay: View {
                             .padding(.bottom, 16)
                         }
                     }
-                    .frame(height: max(200, geometry.size.height - geometry.safeAreaInsets.top - geometry.safeAreaInsets.bottom - 120) + dragOffset)
+                    .frame(height: max(200, geometry.size.height * 0.7))
                     .background(Color(.systemBackground))
                     .medicalCornerRadius(20, corners: [.bottomLeft, .bottomRight])
                     .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-                    .offset(y: min(0, dragOffset))
+                    .offset(x: dragOffset, y: 0)
                     .gesture(
+                        // メインコンテンツでの左右スワイプジェスチャー（優先度高）
                         DragGesture()
                             .onChanged { value in
-                                dragOffset = value.translation.height
+                                // 左右スワイプの場合は横方向の移動を追跡
+                                if abs(value.translation.width) > abs(value.translation.height) {
+                                    dragOffset = value.translation.width
+                                } else {
+                                    // 上下方向は従来通り（下スワイプで閉じる）
+                                    if value.translation.height > 50 {
+                                        dragOffset = value.translation.height * 0.3 // 抵抗感を追加
+                                    }
+                                }
                             }
                             .onEnded { value in
-                                let threshold: CGFloat = -50
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    if value.translation.height < threshold {
-                                        // 上にドラッグして閉じる
-                                        isShowing = false
-                                        dragOffset = 0
+                                let horizontalDistance = value.translation.width
+                                let verticalDistance = value.translation.height
+                                let horizontalVelocity = abs(value.velocity.width)
+                                let verticalVelocity = abs(value.velocity.height)
+                                
+                                // 左右スワイプで消える（メイン機能）
+                                if abs(horizontalDistance) > abs(verticalDistance) {
+                                    if abs(horizontalDistance) > 80 || horizontalVelocity > 400 {
+                                        // ハプティクフィードバック
+                                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                                        impact.impactOccurred()
+                                        
+                                        // スワイプした方向に消える演出
+                                        let exitDirection: CGFloat = horizontalDistance > 0 ? geometry.size.width + 100 : -geometry.size.width - 100
+                                        
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                            dragOffset = exitDirection
+                                        }
+                                        
+                                        // 少し遅れてオーバーレイを閉じる
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                            isShowing = false
+                                            dragOffset = 0
+                                        }
                                     } else {
                                         // 元の位置に戻る
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                            dragOffset = 0
+                                        }
+                                    }
+                                }
+                                // 下方向ドラッグで閉じる（補助機能）
+                                else if verticalDistance > 120 || (verticalDistance > 60 && verticalVelocity > 500) {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        isShowing = false
+                                        dragOffset = 0
+                                    }
+                                }
+                                // 元の位置に戻る
+                                else {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                                         dragOffset = 0
                                     }
                                 }
@@ -761,44 +813,55 @@ struct MedicalGuideOverlay: View {
                     )
                     
                     Spacer()
+                        .frame(height: 120) // フッター分のスペースを確保
                 }
             }
         }
     }
     
     private var dragHandle: some View {
-        RoundedRectangle(cornerRadius: 3)
-            .fill(Color.secondary.opacity(0.4))
-            .frame(width: 40, height: 4)
-            .padding(.top, 4)
-            .padding(.bottom, 2)
+        VStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.secondary.opacity(0.5))
+                .frame(width: 36, height: 4)
+            
+            // ドラッグヒント（左右スワイプ用）
+            Text("← 左右スワイプで閉じる →")
+                .font(.caption2)
+                .foregroundColor(.secondary.opacity(0.7))
+                .padding(.top, 2)
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 6)
     }
     
     private var overlayHeaderView: some View {
         HStack {
-            Button("閉じる") {
+            Button("✕ 閉じる") {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isShowing = false
                 }
             }
             .foregroundColor(.blue)
-            .font(.caption)
+            .font(.subheadline)
             .fontWeight(.medium)
             
             Spacer()
             
             Text("医療記録入力ガイド")
-                .font(.system(size: 10))
-                .fontWeight(.medium)
+                .font(.subheadline)
+                .fontWeight(.semibold)
             
             Spacer()
             
-            // バランス調整用のスペース
-            Color.clear
-                .frame(width: 30)
+            // 操作ヒント
+            Text("背景タップで閉じる")
+                .font(.caption2)
+                .foregroundColor(.secondary)
         }
-        .padding(.horizontal, 8)
-        .frame(height: 20)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
     }
 }
 
@@ -871,7 +934,6 @@ struct MedicalCategoryCard: View {
 enum MedicalCategory: CaseIterable {
     case basicInfo
     case medicalHistory
-    case currentCondition
     case vitalSigns
     case physicalExam
     case diagnostics
@@ -883,8 +945,6 @@ enum MedicalCategory: CaseIterable {
             return "基本情報"
         case .medicalHistory:
             return "病歴・既往歴"
-        case .currentCondition:
-            return "現在の状態"
         case .vitalSigns:
             return "バイタルサイン"
         case .physicalExam:
@@ -902,8 +962,6 @@ enum MedicalCategory: CaseIterable {
             return "person.fill"
         case .medicalHistory:
             return "clock.fill"
-        case .currentCondition:
-            return "heart.fill"
         case .vitalSigns:
             return "waveform.path.ecg"
         case .physicalExam:
@@ -921,8 +979,6 @@ enum MedicalCategory: CaseIterable {
             return .blue
         case .medicalHistory:
             return .orange
-        case .currentCondition:
-            return .red
         case .vitalSigns:
             return .green
         case .physicalExam:
@@ -949,18 +1005,12 @@ enum MedicalCategory: CaseIterable {
                 "主訴（今回の主な症状・問題）",
                 "現病歴（症状の経過・変化）",
                 "既往歴（過去の病気・手術歴）",
-                "内服薬（現在服用中の薬剤）",
-                "生活歴（喫煙・飲酒・職業など）"
-            ]
-        case .currentCondition:
-            return [
-                "意識レベル（清明・傾眠・昏睡など）",
-                "全身状態（安定・不安定など）",
-                "症状の程度（軽度・中等度・重度）",
-                "痛みの有無・程度（0-10スケール）"
+                "内服薬（現在服用中の薬剤名）",
+                "生活歴（居住形態（施設など）、ADL、喫煙・飲酒）"
             ]
         case .vitalSigns:
             return [
+                "意識レベルGCS（E, V, M）、瞳孔所見など",
                 "血圧（収縮期/拡張期 mmHg）",
                 "脈拍（回/分、リズム）",
                 "SpO2（%、室内気または酸素下）",

@@ -155,7 +155,7 @@ struct QRCodeView: View {
         .onAppear {
             generateQRCodes()
         }
-        .onChange(of: qrService.isGenerating) { isGenerating in
+        .onChange(of: qrService.isGenerating) { _, isGenerating in
             if isGenerating {
                 loadingProgress = "QRコード生成中..."
             }
@@ -181,27 +181,18 @@ struct QRCodeView: View {
         }
         
         Task {
-            do {
-                let images = await qrService.generateQRCodesAsync(from: content)
-                await MainActor.run {
-                    print("[QRCodeView] Received \(images.count) QR images")
-                    if images.isEmpty {
-                        // エラー状態
-                        isLoading = false
-                        alertMessage = "QRコードの生成に失敗しました。テキストが長すぎるか、システムエラーが発生した可能性があります。"
-                        showingAlert = true
-                    } else {
-                        qrImages = images
-                        isLoading = false
-                        print("[QRCodeView] QR codes generated successfully: \(images.count) codes")
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    print("[QRCodeView] Error generating QR codes: \(error)")
+            let images = await qrService.generateQRCodesAsync(from: content)
+            await MainActor.run {
+                print("[QRCodeView] Received \(images.count) QR images")
+                if images.isEmpty {
+                    // エラー状態
                     isLoading = false
-                    alertMessage = "QRコード生成中にエラーが発生しました: \(error.localizedDescription)"
+                    alertMessage = "QRコードの生成に失敗しました。テキストが長すぎるか、システムエラーが発生した可能性があります。"
                     showingAlert = true
+                } else {
+                    qrImages = images
+                    isLoading = false
+                    print("[QRCodeView] QR codes generated successfully: \(images.count) codes")
                 }
             }
         }

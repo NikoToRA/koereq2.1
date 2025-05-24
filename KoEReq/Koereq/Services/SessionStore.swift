@@ -101,6 +101,11 @@ class SessionStore: ObservableObject {
     
     // MARK: - Local Storage Operations
     
+    func reloadSessions() {
+        loadSessions()
+        print("Sessions reloaded from UserDefaults")
+    }
+    
     private func saveSessions() {
         do {
             let data = try JSONEncoder().encode(sessions)

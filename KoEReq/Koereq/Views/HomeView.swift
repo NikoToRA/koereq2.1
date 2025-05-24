@@ -37,7 +37,7 @@ struct HomeView: View {
                 }
                 .refreshable {
                     // セッション一覧を更新
-                    sessionStore.objectWillChange.send()
+                    sessionStore.reloadSessions()
                 }
                 
                 // 新規セッション開始ボタン (画面下部に移動)
@@ -47,7 +47,7 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                sessionStore.objectWillChange.send()
+                sessionStore.reloadSessions()
             }
             .navigationDestination(isPresented: $navigateToNewSession) {
                 SessionView()
@@ -209,6 +209,8 @@ struct SessionViewWrapper: View {
         SessionView()
             .onAppear {
                 sessionStore.currentSession = sessionToSet
+                // セッション設定後にUIの更新をトリガー
+                sessionStore.objectWillChange.send()
             }
     }
 }
