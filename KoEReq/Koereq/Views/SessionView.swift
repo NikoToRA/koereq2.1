@@ -18,6 +18,8 @@ struct SessionView: View {
     
     @State private var showingPromptSelector = false
     @State private var showingQRCode = false
+    @State private var showingHelp = false
+    @State private var showingMedicalGuide = false
     @State private var selectedPromptType: PromptType?
     @State private var currentAudioURL: URL?
     @State private var chatMessages: [ChatMessage] = []
@@ -57,6 +59,18 @@ struct SessionView: View {
             if isProcessing {
                 processingOverlay
             }
+            
+            // 医療記録ガイドオーバーレイ（フッターを除外）
+            if showingMedicalGuide {
+                VStack(spacing: 0) {
+                    MedicalGuideOverlay(isShowing: $showingMedicalGuide)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .animation(.easeInOut(duration: 0.3), value: showingMedicalGuide)
+                    
+                    Spacer()
+                        .frame(height: 120) // フッター分のスペースを確保
+                }
+            }
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -69,6 +83,10 @@ struct SessionView: View {
         .sheet(isPresented: $showingQRCode) {
             QRCodeView(content: lastAIResponse)
         }
+        .sheet(isPresented: $showingHelp) {
+            HelpView()
+        }
+
         .alert("エラー", isPresented: $showingError) {
             Button("OK") { }
         } message: {
@@ -100,9 +118,23 @@ struct SessionView: View {
             
             Spacer()
             
-            Button(action: endSession) {
-                Text("終了")
-                    .foregroundColor(.red)
+            HStack(spacing: 12) {
+                Button(action: { showingMedicalGuide = true }) {
+                    Image(systemName: "list.clipboard")
+                        .font(.title3)
+                        .foregroundColor(.green)
+                }
+                
+                Button(action: { showingHelp = true }) {
+                    Image(systemName: "questionmark.circle")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                }
+                
+                Button(action: endSession) {
+                    Text("終了")
+                        .foregroundColor(.red)
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -123,7 +155,7 @@ struct SessionView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .onChange(of: chatMessages.count) { _ in
+            .onChange(of: chatMessages.count) {
                 if let lastMessage = chatMessages.last {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         proxy.scrollTo(lastMessage.id, anchor: .bottom)
@@ -505,6 +537,488 @@ struct ChatBubbleView: View {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Help View
+
+struct HelpView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // タイトル
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("音声入力ガイド")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                        
+                        Text("患者情報収集ガイド")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Divider()
+                    
+                    // セクション1: 基本的な使い方
+                    HelpSectionView(
+                        icon: "mic.circle.fill",
+                        iconColor: .blue,
+                        title: "基本的な使い方",
+                        content: """
+                        1. 📱 マイクボタンをタップして録音開始
+                        2. 🗣️ はっきりと話しかけてください、録音されています。
+                        3. 🛑 マイクボタンを再度タップして録音終了
+                        4. 🤖 AI生成ボタンで回答を生成できます
+                        """
+                    )
+                    
+                    // セクション2: 音声入力のコツ
+                    HelpSectionView(
+                        icon: "lightbulb.fill",
+                        iconColor: .orange,
+                        title: "音声入力のコツ",
+                        content: """
+                        🎯 はっきりと、ゆっくり話す
+                        🔇 静かな環境で録音する
+                        📱 デバイスを口から20-30cm離す
+                        ⏸️ 句読点の位置で少し間を置く
+                        🔤 専門用語は特にゆっくりと
+                        """
+                    )
+                    
+                    // セクション3: AI生成について
+                    HelpSectionView(
+                        icon: "brain",
+                        iconColor: .purple,
+                        title: "AI生成機能",
+                        content: """
+                        💬 録音した内容を基にAIが回答を生成
+                        📝 要約、翻訳、文章作成など様々な用途
+                        🎯 プロンプトを選択して用途を指定
+                        📋 生成された内容はQRコードで共有可能
+                        """
+                    )
+                    
+                    // セクション4: 録音時の注意点
+                    HelpSectionView(
+                        icon: "exclamationmark.triangle.fill",
+                        iconColor: .red,
+                        title: "録音時の注意",
+                        content: """
+                        🔊 録音レベルが適切か確認してください
+                        🎤 マイクが塞がれていないか確認
+                        🔋 バッテリー残量にご注意ください
+                        📶 安定したネットワーク環境で使用
+                        ⏱️ 長時間の録音は分割することをお勧めします
+                        """
+                    )
+                    
+                    // セクション5: トラブルシューティング
+                    HelpSectionView(
+                        icon: "gear",
+                        iconColor: .gray,
+                        title: "よくある問題",
+                        content: """
+                        ❌ 音声が認識されない
+                        → マイク権限を確認してください
+                        
+                        🌐 AI生成が失敗する
+                        → ネットワーク接続を確認してください
+                        
+                        🔇 音が小さい
+                        → デバイスに近づいて話してください
+                        
+                        ⚡ 処理が遅い
+                        → しばらくお待ちください
+                        """
+                    )
+                }
+                .padding(20)
+            }
+            .navigationTitle("ヘルプ")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("閉じる") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Help Section View
+
+struct HelpSectionView: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let content: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(iconColor)
+                    .frame(width: 30)
+                
+                Text(title)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+            }
+            
+            Text(content)
+                .font(.body)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.leading, 42)
+        }
+        .padding(16)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Medical Guide Overlay
+
+struct MedicalGuideOverlay: View {
+    @Binding var isShowing: Bool
+    @State private var selectedCategory: MedicalCategory?
+    @State private var dragOffset: CGFloat = 0
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // 半透明背景（フッター部分を除外）
+                VStack(spacing: 0) {
+                    Color.black.opacity(0.3)
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isShowing = false
+                            }
+                        }
+                    
+                    // フッター部分は背景を適用しない
+                    Color.clear
+                        .frame(height: 120)
+                }
+                .ignoresSafeArea()
+                
+                // メインオーバーレイ
+                VStack(spacing: 0) {
+                    VStack(spacing: 0) {
+                        // ドラッグハンドル
+                        dragHandle
+                        
+                        // ヘッダー
+                        overlayHeaderView
+                        
+                        // メインコンテンツ
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(MedicalCategory.allCases, id: \.self) { category in
+                                    MedicalCategoryCard(
+                                        category: category,
+                                        isSelected: selectedCategory == category
+                                    ) {
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            selectedCategory = selectedCategory == category ? nil : category
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                        }
+                    }
+                    .frame(height: max(200, geometry.size.height - geometry.safeAreaInsets.top - geometry.safeAreaInsets.bottom - 120) + dragOffset)
+                    .background(Color(.systemBackground))
+                    .medicalCornerRadius(20, corners: [.bottomLeft, .bottomRight])
+                    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+                    .offset(y: min(0, dragOffset))
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                dragOffset = value.translation.height
+                            }
+                            .onEnded { value in
+                                let threshold: CGFloat = -50
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    if value.translation.height < threshold {
+                                        // 上にドラッグして閉じる
+                                        isShowing = false
+                                        dragOffset = 0
+                                    } else {
+                                        // 元の位置に戻る
+                                        dragOffset = 0
+                                    }
+                                }
+                            }
+                    )
+                    
+                    Spacer()
+                }
+            }
+        }
+    }
+    
+    private var dragHandle: some View {
+        RoundedRectangle(cornerRadius: 3)
+            .fill(Color.secondary.opacity(0.4))
+            .frame(width: 40, height: 4)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+    }
+    
+    private var overlayHeaderView: some View {
+        HStack {
+            Button("閉じる") {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isShowing = false
+                }
+            }
+            .foregroundColor(.blue)
+            .font(.caption)
+            .fontWeight(.medium)
+            
+            Spacer()
+            
+            Text("医療記録入力ガイド")
+                .font(.system(size: 10))
+                .fontWeight(.medium)
+            
+            Spacer()
+            
+            // バランス調整用のスペース
+            Color.clear
+                .frame(width: 30)
+        }
+        .padding(.horizontal, 8)
+        .frame(height: 20)
+    }
+}
+
+// MARK: - Medical Category Card
+
+struct MedicalCategoryCard: View {
+    let category: MedicalCategory
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // カテゴリヘッダー
+            Button(action: onTap) {
+                HStack {
+                    HStack(spacing: 12) {
+                        Image(systemName: category.icon)
+                            .font(.title2)
+                            .foregroundColor(category.color)
+                            .frame(width: 30)
+                        
+                        Text(category.title)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: isSelected ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(16)
+                .background(category.color.opacity(0.1))
+                .medicalCornerRadius(12, corners: isSelected ? [.topLeft, .topRight] : .allCorners)
+            }
+            
+            // 展開されたコンテンツ
+            if isSelected {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(category.items, id: \.self) { item in
+                        HStack(alignment: .top, spacing: 12) {
+                            Circle()
+                                .fill(category.color)
+                                .frame(width: 6, height: 6)
+                                .padding(.top, 8)
+                            
+                            Text(item)
+                                .font(.body)
+                                .fixedSize(horizontal: false, vertical: true)
+                            
+                            Spacer()
+                        }
+                    }
+                }
+                .padding(16)
+                .background(Color(.systemGray6))
+                .medicalCornerRadius(12, corners: [.bottomLeft, .bottomRight])
+            }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+    }
+}
+
+// MARK: - Medical Category Model
+
+enum MedicalCategory: CaseIterable {
+    case basicInfo
+    case medicalHistory
+    case currentCondition
+    case vitalSigns
+    case physicalExam
+    case diagnostics
+    case treatment
+    
+    var title: String {
+        switch self {
+        case .basicInfo:
+            return "基本情報"
+        case .medicalHistory:
+            return "病歴・既往歴"
+        case .currentCondition:
+            return "現在の状態"
+        case .vitalSigns:
+            return "バイタルサイン"
+        case .physicalExam:
+            return "身体所見"
+        case .diagnostics:
+            return "検査・診断"
+        case .treatment:
+            return "治療・方針"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .basicInfo:
+            return "person.fill"
+        case .medicalHistory:
+            return "clock.fill"
+        case .currentCondition:
+            return "heart.fill"
+        case .vitalSigns:
+            return "waveform.path.ecg"
+        case .physicalExam:
+            return "stethoscope"
+        case .diagnostics:
+            return "doc.text.magnifyingglass"
+        case .treatment:
+            return "cross.case.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .basicInfo:
+            return .blue
+        case .medicalHistory:
+            return .orange
+        case .currentCondition:
+            return .red
+        case .vitalSigns:
+            return .green
+        case .physicalExam:
+            return .purple
+        case .diagnostics:
+            return .indigo
+        case .treatment:
+            return .pink
+        }
+    }
+    
+    var items: [String] {
+        switch self {
+        case .basicInfo:
+            return [
+                "年齢",
+                "性別",
+                "居住形態（独居・家族同居など）",
+                "介護度（要支援・要介護など）",
+                "ADL（日常生活動作の自立度）"
+            ]
+        case .medicalHistory:
+            return [
+                "主訴（今回の主な症状・問題）",
+                "現病歴（症状の経過・変化）",
+                "既往歴（過去の病気・手術歴）",
+                "内服薬（現在服用中の薬剤）",
+                "生活歴（喫煙・飲酒・職業など）"
+            ]
+        case .currentCondition:
+            return [
+                "意識レベル（清明・傾眠・昏睡など）",
+                "全身状態（安定・不安定など）",
+                "症状の程度（軽度・中等度・重度）",
+                "痛みの有無・程度（0-10スケール）"
+            ]
+        case .vitalSigns:
+            return [
+                "血圧（収縮期/拡張期 mmHg）",
+                "脈拍（回/分、リズム）",
+                "SpO2（%、室内気または酸素下）",
+                "酸素投与量（L/分、投与方法）",
+                "呼吸数（回/分）",
+                "体温（℃）"
+            ]
+        case .physicalExam:
+            return [
+                "外観・全身状態",
+                "頭頸部所見",
+                "胸部所見（心音・呼吸音）",
+                "腹部所見",
+                "四肢所見",
+                "皮膚所見",
+                "神経学的所見"
+            ]
+        case .diagnostics:
+            return [
+                "血液検査結果",
+                "画像検査結果（X線・CT・MRIなど）",
+                "心電図所見",
+                "その他の検査結果",
+                "診断名・病名",
+                "病期・重症度"
+            ]
+        case .treatment:
+            return [
+                "治療方針・計画",
+                "処方薬剤の変更",
+                "処置・手技の実施",
+                "患者・家族への説明内容",
+                "今後の予定・フォローアップ",
+                "注意事項・指導内容"
+            ]
+        }
+    }
+}
+
+// MARK: - Extensions for Medical Guide
+
+extension View {
+    func medicalCornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(MedicalRoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct MedicalRoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
     }
 }
 

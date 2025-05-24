@@ -98,7 +98,7 @@
 		<string>background-processing</string>
 	</array>
 	<key>MinimumOSVersion</key>
-	<string>17.0</string>
+	<string>18.4</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.medical</string>
 	<key>AzureOpenAIAPIKey</key>

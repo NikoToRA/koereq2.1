@@ -110,7 +110,7 @@
 	
 	<!-- iOS最小バージョン -->
 	<key>MinimumOSVersion</key>
-	<string>17.0</string>
+	<string>18.4</string>
 	
 	<!-- アプリカテゴリ -->
 	<key>LSApplicationCategoryType</key>
