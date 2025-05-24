@@ -1,0 +1,680 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7CE489992DE02AAA003CDD0E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489912DE02AAA003CDD0E /* ContentView.swift */; };
+		7CE4899A2DE02AAA003CDD0E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489922DE02AAA003CDD0E /* HomeView.swift */; };
+		7CE4899B2DE02AAA003CDD0E /* UserDictionaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489972DE02AAA003CDD0E /* UserDictionaryView.swift */; };
+		7CE4899C2DE02AAA003CDD0E /* QRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489952DE02AAA003CDD0E /* QRCodeView.swift */; };
+		7CE4899D2DE02AAA003CDD0E /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489962DE02AAA003CDD0E /* SessionView.swift */; };
+		7CE4899E2DE02AAA003CDD0E /* PromptManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489942DE02AAA003CDD0E /* PromptManagerView.swift */; };
+		7CE4899F2DE02AAA003CDD0E /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489932DE02AAA003CDD0E /* LoginView.swift */; };
+		7CE489A82DE02AB0003CDD0E /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489A52DE02AB0003CDD0E /* StorageService.swift */; };
+		7CE489A92DE02AB0003CDD0E /* RecordingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489A32DE02AB0003CDD0E /* RecordingService.swift */; };
+		7CE489AA2DE02AB0003CDD0E /* QRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489A22DE02AB0003CDD0E /* QRService.swift */; };
+		7CE489AB2DE02AB0003CDD0E /* PromptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489A12DE02AB0003CDD0E /* PromptManager.swift */; };
+		7CE489AC2DE02AB0003CDD0E /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489A42DE02AB0003CDD0E /* SessionStore.swift */; };
+		7CE489AD2DE02AB0003CDD0E /* STTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489A62DE02AB0003CDD0E /* STTService.swift */; };
+		7CE489AE2DE02AB0003CDD0E /* OpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489A02DE02AB0003CDD0E /* OpenAIService.swift */; };
+		7CE489B22DE02AB9003CDD0E /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489AF2DE02AB9003CDD0E /* Session.swift */; };
+		7CE489B32DE02AB9003CDD0E /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489B02DE02AB9003CDD0E /* User.swift */; };
+		7CE48A0A2DE0592F003CDD0E /* APIKeys.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7CE4890E2DE024E1003CDD0E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CE488F32DE024E0003CDD0E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7CE488FA2DE024E0003CDD0E;
+			remoteInfo = Koereq;
+		};
+		7CE489182DE024E1003CDD0E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CE488F32DE024E0003CDD0E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7CE488FA2DE024E0003CDD0E;
+			remoteInfo = Koereq;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		7CE488FB2DE024E0003CDD0E /* Koereq.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Koereq.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7CE4890D2DE024E1003CDD0E /* KoereqTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KoereqTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7CE489172DE024E1003CDD0E /* KoereqUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KoereqUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7CE489912DE02AAA003CDD0E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7CE489922DE02AAA003CDD0E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		7CE489932DE02AAA003CDD0E /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		7CE489942DE02AAA003CDD0E /* PromptManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptManagerView.swift; sourceTree = "<group>"; };
+		7CE489952DE02AAA003CDD0E /* QRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeView.swift; sourceTree = "<group>"; };
+		7CE489962DE02AAA003CDD0E /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
+		7CE489972DE02AAA003CDD0E /* UserDictionaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDictionaryView.swift; sourceTree = "<group>"; };
+		7CE489A02DE02AB0003CDD0E /* OpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIService.swift; sourceTree = "<group>"; };
+		7CE489A12DE02AB0003CDD0E /* PromptManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptManager.swift; sourceTree = "<group>"; };
+		7CE489A22DE02AB0003CDD0E /* QRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRService.swift; sourceTree = "<group>"; };
+		7CE489A32DE02AB0003CDD0E /* RecordingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingService.swift; sourceTree = "<group>"; };
+		7CE489A42DE02AB0003CDD0E /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		7CE489A52DE02AB0003CDD0E /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
+		7CE489A62DE02AB0003CDD0E /* STTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTService.swift; sourceTree = "<group>"; };
+		7CE489AF2DE02AB9003CDD0E /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		7CE489B02DE02AB9003CDD0E /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = APIKeys.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7CE48A072DE04163003CDD0E /* Exceptions for "Koereq" folder in "Koereq" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				Koereq.xcdatamodeld,
+			);
+			target = 7CE488FA2DE024E0003CDD0E /* Koereq */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		7CE488FD2DE024E0003CDD0E /* Koereq */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7CE48A072DE04163003CDD0E /* Exceptions for "Koereq" folder in "Koereq" target */,
+			);
+			path = Koereq;
+			sourceTree = "<group>";
+		};
+		7CE489102DE024E1003CDD0E /* KoereqTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KoereqTests;
+			sourceTree = "<group>";
+		};
+		7CE4891A2DE024E1003CDD0E /* KoereqUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KoereqUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7CE488F82DE024E0003CDD0E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CE4890A2DE024E1003CDD0E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CE489142DE024E1003CDD0E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7CE488F22DE024E0003CDD0E = {
+			isa = PBXGroup;
+			children = (
+				7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */,
+				7CE489B12DE02AB9003CDD0E /* Models */,
+				7CE489A72DE02AB0003CDD0E /* Services */,
+				7CE489982DE02AAA003CDD0E /* Views */,
+				7CE488FD2DE024E0003CDD0E /* Koereq */,
+				7CE489102DE024E1003CDD0E /* KoereqTests */,
+				7CE4891A2DE024E1003CDD0E /* KoereqUITests */,
+				7CE488FC2DE024E0003CDD0E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7CE488FC2DE024E0003CDD0E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7CE488FB2DE024E0003CDD0E /* Koereq.app */,
+				7CE4890D2DE024E1003CDD0E /* KoereqTests.xctest */,
+				7CE489172DE024E1003CDD0E /* KoereqUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7CE489982DE02AAA003CDD0E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				7CE489912DE02AAA003CDD0E /* ContentView.swift */,
+				7CE489922DE02AAA003CDD0E /* HomeView.swift */,
+				7CE489932DE02AAA003CDD0E /* LoginView.swift */,
+				7CE489942DE02AAA003CDD0E /* PromptManagerView.swift */,
+				7CE489952DE02AAA003CDD0E /* QRCodeView.swift */,
+				7CE489962DE02AAA003CDD0E /* SessionView.swift */,
+				7CE489972DE02AAA003CDD0E /* UserDictionaryView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7CE489A72DE02AB0003CDD0E /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				7CE489A02DE02AB0003CDD0E /* OpenAIService.swift */,
+				7CE489A12DE02AB0003CDD0E /* PromptManager.swift */,
+				7CE489A22DE02AB0003CDD0E /* QRService.swift */,
+				7CE489A32DE02AB0003CDD0E /* RecordingService.swift */,
+				7CE489A42DE02AB0003CDD0E /* SessionStore.swift */,
+				7CE489A52DE02AB0003CDD0E /* StorageService.swift */,
+				7CE489A62DE02AB0003CDD0E /* STTService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		7CE489B12DE02AB9003CDD0E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				7CE489AF2DE02AB9003CDD0E /* Session.swift */,
+				7CE489B02DE02AB9003CDD0E /* User.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7CE488FA2DE024E0003CDD0E /* Koereq */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CE489212DE024E1003CDD0E /* Build configuration list for PBXNativeTarget "Koereq" */;
+			buildPhases = (
+				7CE488F72DE024E0003CDD0E /* Sources */,
+				7CE488F82DE024E0003CDD0E /* Frameworks */,
+				7CE488F92DE024E0003CDD0E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7CE488FD2DE024E0003CDD0E /* Koereq */,
+			);
+			name = Koereq;
+			packageProductDependencies = (
+			);
+			productName = Koereq;
+			productReference = 7CE488FB2DE024E0003CDD0E /* Koereq.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7CE4890C2DE024E1003CDD0E /* KoereqTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CE489242DE024E1003CDD0E /* Build configuration list for PBXNativeTarget "KoereqTests" */;
+			buildPhases = (
+				7CE489092DE024E1003CDD0E /* Sources */,
+				7CE4890A2DE024E1003CDD0E /* Frameworks */,
+				7CE4890B2DE024E1003CDD0E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7CE4890F2DE024E1003CDD0E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7CE489102DE024E1003CDD0E /* KoereqTests */,
+			);
+			name = KoereqTests;
+			packageProductDependencies = (
+			);
+			productName = KoereqTests;
+			productReference = 7CE4890D2DE024E1003CDD0E /* KoereqTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		7CE489162DE024E1003CDD0E /* KoereqUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CE489272DE024E1003CDD0E /* Build configuration list for PBXNativeTarget "KoereqUITests" */;
+			buildPhases = (
+				7CE489132DE024E1003CDD0E /* Sources */,
+				7CE489142DE024E1003CDD0E /* Frameworks */,
+				7CE489152DE024E1003CDD0E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7CE489192DE024E1003CDD0E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7CE4891A2DE024E1003CDD0E /* KoereqUITests */,
+			);
+			name = KoereqUITests;
+			packageProductDependencies = (
+			);
+			productName = KoereqUITests;
+			productReference = 7CE489172DE024E1003CDD0E /* KoereqUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7CE488F32DE024E0003CDD0E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					7CE488FA2DE024E0003CDD0E = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					7CE4890C2DE024E1003CDD0E = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 7CE488FA2DE024E0003CDD0E;
+					};
+					7CE489162DE024E1003CDD0E = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 7CE488FA2DE024E0003CDD0E;
+					};
+				};
+			};
+			buildConfigurationList = 7CE488F62DE024E0003CDD0E /* Build configuration list for PBXProject "Koereq" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 7CE488F22DE024E0003CDD0E;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7CE488FC2DE024E0003CDD0E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7CE488FA2DE024E0003CDD0E /* Koereq */,
+				7CE4890C2DE024E1003CDD0E /* KoereqTests */,
+				7CE489162DE024E1003CDD0E /* KoereqUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7CE488F92DE024E0003CDD0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7CE48A0A2DE0592F003CDD0E /* APIKeys.xcconfig in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CE4890B2DE024E1003CDD0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CE489152DE024E1003CDD0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7CE488F72DE024E0003CDD0E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7CE489992DE02AAA003CDD0E /* ContentView.swift in Sources */,
+				7CE4899A2DE02AAA003CDD0E /* HomeView.swift in Sources */,
+				7CE4899B2DE02AAA003CDD0E /* UserDictionaryView.swift in Sources */,
+				7CE4899C2DE02AAA003CDD0E /* QRCodeView.swift in Sources */,
+				7CE489A82DE02AB0003CDD0E /* StorageService.swift in Sources */,
+				7CE489A92DE02AB0003CDD0E /* RecordingService.swift in Sources */,
+				7CE489AA2DE02AB0003CDD0E /* QRService.swift in Sources */,
+				7CE489AB2DE02AB0003CDD0E /* PromptManager.swift in Sources */,
+				7CE489AC2DE02AB0003CDD0E /* SessionStore.swift in Sources */,
+				7CE489AD2DE02AB0003CDD0E /* STTService.swift in Sources */,
+				7CE489AE2DE02AB0003CDD0E /* OpenAIService.swift in Sources */,
+				7CE4899D2DE02AAA003CDD0E /* SessionView.swift in Sources */,
+				7CE4899E2DE02AAA003CDD0E /* PromptManagerView.swift in Sources */,
+				7CE489B22DE02AB9003CDD0E /* Session.swift in Sources */,
+				7CE489B32DE02AB9003CDD0E /* User.swift in Sources */,
+				7CE4899F2DE02AAA003CDD0E /* LoginView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CE489092DE024E1003CDD0E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CE489132DE024E1003CDD0E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7CE4890F2DE024E1003CDD0E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7CE488FA2DE024E0003CDD0E /* Koereq */;
+			targetProxy = 7CE4890E2DE024E1003CDD0E /* PBXContainerItemProxy */;
+		};
+		7CE489192DE024E1003CDD0E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7CE488FA2DE024E0003CDD0E /* Koereq */;
+			targetProxy = 7CE489182DE024E1003CDD0E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		7CE4891F2DE024E1003CDD0E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		7CE489202DE024E1003CDD0E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		7CE489222DE024E1003CDD0E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Koereq/Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "「音声入力のためにマイクを使用します。」";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "音声をテキスト化します";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suguru.Koereq;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7CE489232DE024E1003CDD0E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Koereq/Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "「音声入力のためにマイクを使用します。」";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "音声をテキスト化します";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suguru.Koereq;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		7CE489252DE024E1003CDD0E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suguru.KoereqTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Koereq.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Koereq";
+			};
+			name = Debug;
+		};
+		7CE489262DE024E1003CDD0E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suguru.KoereqTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Koereq.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Koereq";
+			};
+			name = Release;
+		};
+		7CE489282DE024E1003CDD0E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suguru.KoereqUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Koereq;
+			};
+			name = Debug;
+		};
+		7CE489292DE024E1003CDD0E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 94TV22FLFY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suguru.KoereqUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Koereq;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7CE488F62DE024E0003CDD0E /* Build configuration list for PBXProject "Koereq" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CE4891F2DE024E1003CDD0E /* Debug */,
+				7CE489202DE024E1003CDD0E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7CE489212DE024E1003CDD0E /* Build configuration list for PBXNativeTarget "Koereq" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CE489222DE024E1003CDD0E /* Debug */,
+				7CE489232DE024E1003CDD0E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7CE489242DE024E1003CDD0E /* Build configuration list for PBXNativeTarget "KoereqTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CE489252DE024E1003CDD0E /* Debug */,
+				7CE489262DE024E1003CDD0E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7CE489272DE024E1003CDD0E /* Build configuration list for PBXNativeTarget "KoereqUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CE489282DE024E1003CDD0E /* Debug */,
+				7CE489292DE024E1003CDD0E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 7CE488F32DE024E0003CDD0E /* Project object */;
+}
