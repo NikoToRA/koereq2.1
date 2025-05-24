@@ -118,6 +118,6 @@
 	
 	<!-- Azure OpenAI API Key -->
 	<key>AzureOpenAIAPIKey</key>
-	<string>YOUR_AZURE_OPENAI_API_KEY_HERE</string>
+	<string>$(AZURE_OPENAI_API_KEY)</string>
 </dict>
 </plist>

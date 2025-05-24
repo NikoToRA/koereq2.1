@@ -92,4 +92,5 @@ fastlane/test_output
 *.xcsettings
 
 # API Keys configuration
-APIKeys.xcconfig 
+APIKeys.xcconfig
+!APIKeys.xcconfig.template 
