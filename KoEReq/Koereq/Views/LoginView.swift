@@ -11,7 +11,6 @@ struct LoginView: View {
     @EnvironmentObject var userManager: UserManager
     
     @State private var facilityId = ""
-    @State private var userId = ""
     @State private var facilityName = ""
     @State private var showingAlert = false
     @State private var alertMessage = ""
@@ -50,16 +49,7 @@ struct LoginView: View {
                             .disableAutocorrection(true)
                     }
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("ユーザーID")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        TextField("ユーザーIDを入力", text: $userId)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                    }
+
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("施設名")
@@ -114,23 +104,16 @@ struct LoginView: View {
     
     private var isLoginEnabled: Bool {
         !facilityId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !userId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !facilityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     private func login() {
         let trimmedFacilityId = facilityId.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedUserId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedFacilityName = facilityName.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // 基本的なバリデーション
         guard trimmedFacilityId.count >= 3 else {
             showAlert(message: "施設IDは3文字以上で入力してください")
-            return
-        }
-        
-        guard trimmedUserId.count >= 3 else {
-            showAlert(message: "ユーザーIDは3文字以上で入力してください")
             return
         }
         
@@ -142,7 +125,6 @@ struct LoginView: View {
         // ログイン処理
         userManager.login(
             facilityId: trimmedFacilityId,
-            userId: trimmedUserId,
             facilityName: trimmedFacilityName
         )
     }

@@ -14,7 +14,7 @@ struct QRCodeView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var qrImage: UIImage?
-    @State private var showingShareSheet = false
+
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
@@ -67,35 +67,7 @@ struct QRCodeView: View {
                 
                 // アクションボタン
                 VStack(spacing: 16) {
-                    if qrImage != nil {
-                        // 共有ボタン
-                        Button(action: shareQRCode) {
-                            HStack {
-                                Image(systemName: "square.and.arrow.up")
-                                Text("共有")
-                                    .fontWeight(.semibold)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                        }
-                        
-                        // 写真に保存ボタン
-                        Button(action: saveToPhotos) {
-                            HStack {
-                                Image(systemName: "photo.badge.plus")
-                                Text("写真に保存")
-                                    .fontWeight(.semibold)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                        }
-                    }
+
                     
                     // 閉じるボタン
                     Button(action: { dismiss() }) {
@@ -115,11 +87,7 @@ struct QRCodeView: View {
         .onAppear {
             generateQRCode()
         }
-        .sheet(isPresented: $showingShareSheet) {
-            if let qrImage = qrImage {
-                ShareSheet(items: [qrImage])
-            }
-        }
+
         .alert("通知", isPresented: $showingAlert) {
             Button("OK") { }
         } message: {
@@ -136,41 +104,12 @@ struct QRCodeView: View {
         }
     }
     
-    private func shareQRCode() {
-        showingShareSheet = true
-    }
+
     
-    private func saveToPhotos() {
-        guard let qrImage = qrImage else { return }
-        
-        qrService.saveQRCodeToPhotos(qrImage)
-        
-        // 保存完了メッセージ
-        alertMessage = "QRコードを写真に保存しました"
-        showingAlert = true
-    }
+
 }
 
-// MARK: - Share Sheet
 
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        
-        // iPadでの表示設定
-        if let popover = controller.popoverPresentationController {
-            popover.sourceView = UIApplication.shared.windows.first?.rootViewController?.view
-            popover.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
-            popover.permittedArrowDirections = []
-        }
-        
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
 
 #Preview {
     QRCodeView(content: "これはサンプルのAI応答内容です。QRコードとして表示されます。")

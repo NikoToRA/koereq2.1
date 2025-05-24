@@ -97,8 +97,8 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 Button(action: { showingUserDictionary = true }) {
                     VStack(spacing: 2) {
-                        Image(systemName: "book.closed")
-                        Text("辞書")
+                        Image(systemName: "text.bubble")
+                        Text("変換辞書")
                             .font(.caption2)
                     }
                     .foregroundColor(.blue)

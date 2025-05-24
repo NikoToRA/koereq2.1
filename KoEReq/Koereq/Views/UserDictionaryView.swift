@@ -19,7 +19,7 @@ struct UserDictionaryView: View {
     
     private var filteredEntries: [DictionaryEntry] {
         if searchText.isEmpty {
-            return promptManager.userDictionary.sorted { $0.term < $1.term }
+            return promptManager.userDictionary.sorted { $0.wrongTerm < $1.wrongTerm }
         } else {
             return promptManager.searchDictionary(query: searchText)
         }
@@ -30,6 +30,9 @@ struct UserDictionaryView: View {
             VStack(spacing: 0) {
                 // ヘッダー
                 headerView
+                
+                // 説明テキスト
+                explanationView
                 
                 // 検索バー
                 searchBarView
@@ -44,13 +47,13 @@ struct UserDictionaryView: View {
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showingAddEntry) {
-            DictionaryEntryEditView(entry: nil) { term, reading, definition in
-                promptManager.addDictionaryEntry(term: term, reading: reading, definition: definition)
+            DictionaryEntryEditView(entry: nil) { wrongTerm, correctTerm in
+                promptManager.addDictionaryEntry(wrongTerm: wrongTerm, correctTerm: correctTerm)
             }
         }
         .sheet(item: $editingEntry) { entry in
-            DictionaryEntryEditView(entry: entry) { term, reading, definition in
-                promptManager.updateDictionaryEntry(id: entry.id, term: term, reading: reading, definition: definition)
+            DictionaryEntryEditView(entry: entry) { wrongTerm, correctTerm in
+                promptManager.updateDictionaryEntry(id: entry.id, wrongTerm: wrongTerm, correctTerm: correctTerm)
             }
         }
         .alert("辞書項目を削除", isPresented: $showingDeleteAlert) {
@@ -77,7 +80,7 @@ struct UserDictionaryView: View {
             
             Spacer()
             
-            Text("ユーザー辞書")
+            Text("音声変換辞書")
                 .font(.headline)
                 .fontWeight(.semibold)
             
@@ -94,12 +97,29 @@ struct UserDictionaryView: View {
         .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
     }
     
+    private var explanationView: some View {
+        VStack(spacing: 8) {
+            Text("音声認識の誤変換を修正")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
+            
+            Text("例：「ご縁性肺炎」→「誤嚥性肺炎」、「著名」→「著明」")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemGray6))
+    }
+    
     private var searchBarView: some View {
         HStack {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.secondary)
             
-            TextField("用語を検索", text: $searchText)
+            TextField("変換を検索", text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
             
             if !searchText.isEmpty {
@@ -119,31 +139,38 @@ struct UserDictionaryView: View {
     
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "book.closed")
+            Image(systemName: "text.bubble")
                 .font(.system(size: 50))
                 .foregroundColor(.gray.opacity(0.5))
             
             if searchText.isEmpty {
-                Text("辞書項目がありません")
+                Text("変換辞書がありません")
                     .font(.headline)
                     .foregroundColor(.secondary)
                 
-                Text("医療用語や専門用語を登録して\n音声認識の精度を向上させましょう")
+                Text("音声認識で間違いやすい用語を\n正しい表記に変換する設定を追加しましょう")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                 
                 Button(action: { showingAddEntry = true }) {
-                    Text("最初の項目を追加")
-                        .font(.subheadline)
-                        .foregroundColor(.blue)
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("最初の変換を追加")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.blue)
+                    .cornerRadius(25)
                 }
             } else {
                 Text("検索結果がありません")
                     .font(.headline)
                     .foregroundColor(.secondary)
                 
-                Text("「\(searchText)」に一致する項目が見つかりません")
+                Text("「\(searchText)」に一致する変換が見つかりません")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -155,7 +182,7 @@ struct UserDictionaryView: View {
     
     private var dictionaryListView: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 8) {
                 ForEach(filteredEntries) { entry in
                     DictionaryEntryCardView(
                         entry: entry,
@@ -179,58 +206,79 @@ struct DictionaryEntryCardView: View {
     let onDelete: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(entry.term)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    if !entry.reading.isEmpty {
-                        Text("読み: \(entry.reading)")
+        HStack(spacing: 12) {
+            // 変換表示
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    // 誤変換（左側）
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("誤変換")
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                            .fontWeight(.medium)
+                        
+                        Text(entry.wrongTerm)
                             .font(.subheadline)
-                            .foregroundColor(.blue)
-                    }
-                }
-                
-                Spacer()
-                
-                Menu {
-                    Button(action: onEdit) {
-                        Label("編集", systemImage: "pencil")
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(6)
                     }
                     
-                    Button(action: onDelete) {
-                        Label("削除", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
+                    // 矢印
+                    Image(systemName: "arrow.right")
+                        .font(.caption)
                         .foregroundColor(.secondary)
+                        .padding(.horizontal, 8)
+                    
+                    // 正しい変換（右側）
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("正しい変換")
+                            .font(.caption2)
+                            .foregroundColor(.green)
+                            .fontWeight(.medium)
+                        
+                        Text(entry.correctTerm)
+                            .font(.subheadline)
+                            .foregroundColor(.green)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.green.opacity(0.1))
+                            .cornerRadius(6)
+                    }
+                    
+                    Spacer()
                 }
-            }
-            
-            if !entry.definition.isEmpty {
-                Text(entry.definition)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(3)
-            }
-            
-            HStack {
+                
+                // 作成日時
                 Text("作成: \(formatDate(entry.createdAt))")
                     .font(.caption2)
                     .foregroundColor(.secondary)
+            }
+            
+            // 操作ボタン
+            VStack(spacing: 8) {
+                Button(action: onEdit) {
+                    Image(systemName: "pencil")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                        .frame(width: 32, height: 32)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(8)
+                }
                 
-                Spacer()
-                
-                if entry.updatedAt != entry.createdAt {
-                    Text("更新: \(formatDate(entry.updatedAt))")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .frame(width: 32, height: 32)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(8)
                 }
             }
         }
-        .padding(16)
+        .padding(12)
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .overlay(
@@ -249,58 +297,100 @@ struct DictionaryEntryCardView: View {
 
 struct DictionaryEntryEditView: View {
     let entry: DictionaryEntry?
-    let onSave: (String, String, String) -> Void
+    let onSave: (String, String) -> Void
     
     @Environment(\.dismiss) private var dismiss
     
-    @State private var term: String
-    @State private var reading: String
-    @State private var definition: String
+    @State private var wrongTerm: String
+    @State private var correctTerm: String
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
-    init(entry: DictionaryEntry?, onSave: @escaping (String, String, String) -> Void) {
+    init(entry: DictionaryEntry?, onSave: @escaping (String, String) -> Void) {
         self.entry = entry
         self.onSave = onSave
-        self._term = State(initialValue: entry?.term ?? "")
-        self._reading = State(initialValue: entry?.reading ?? "")
-        self._definition = State(initialValue: entry?.definition ?? "")
+        self._wrongTerm = State(initialValue: entry?.wrongTerm ?? "")
+        self._correctTerm = State(initialValue: entry?.correctTerm ?? "")
     }
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("用語")
-                        .font(.headline)
+            ScrollView {
+                VStack(spacing: 24) {
+                    // 説明
+                    VStack(spacing: 8) {
+                        Text("音声認識の誤変換を修正する設定")
+                            .font(.headline)
+                            .multilineTextAlignment(.center)
+                        
+                        Text("音声入力で間違って認識される言葉を、正しい表記に自動変換します")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 20)
                     
-                    TextField("医療用語を入力", text: $term)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("読み方")
-                        .font(.headline)
+                    // 入力フォーム
+                    VStack(spacing: 20) {
+                        // 誤変換される文字
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("誤変換される文字")
+                                    .font(.headline)
+                                    .foregroundColor(.red)
+                                
+                                Spacer()
+                                
+                                Text("例：ご縁性肺炎")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            TextField("音声認識で間違って入力される文字", text: $wrongTerm)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                                )
+                        }
+                        
+                        // 矢印
+                        HStack {
+                            Spacer()
+                            Image(systemName: "arrow.down")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        
+                        // 正しい変換
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("正しい変換")
+                                    .font(.headline)
+                                    .foregroundColor(.green)
+                                
+                                Spacer()
+                                
+                                Text("例：誤嚥性肺炎")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            TextField("正しく変換したい文字", text: $correctTerm)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                                )
+                        }
+                    }
                     
-                    TextField("ひらがなで読み方を入力", text: $reading)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    Spacer()
                 }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("定義・説明")
-                        .font(.headline)
-                    
-                    TextEditor(text: $definition)
-                        .frame(minHeight: 100)
-                        .padding(8)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                }
-                
-                Spacer()
+                .padding(.horizontal, 20)
             }
-            .padding(20)
-            .navigationTitle(entry == nil ? "新規項目" : "項目編集")
+            .navigationTitle(entry == nil ? "新規変換追加" : "変換編集")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -314,6 +404,7 @@ struct DictionaryEntryEditView: View {
                         saveEntry()
                     }
                     .disabled(!isValid)
+                    .fontWeight(.semibold)
                 }
             }
         }
@@ -325,21 +416,33 @@ struct DictionaryEntryEditView: View {
     }
     
     private var isValid: Bool {
-        !term.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !wrongTerm.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !correctTerm.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     private func saveEntry() {
-        let trimmedTerm = term.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedReading = reading.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedDefinition = definition.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedWrongTerm = wrongTerm.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCorrectTerm = correctTerm.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        guard !trimmedTerm.isEmpty else {
-            alertMessage = "用語を入力してください"
+        guard !trimmedWrongTerm.isEmpty else {
+            alertMessage = "誤変換される文字を入力してください"
             showingAlert = true
             return
         }
         
-        onSave(trimmedTerm, trimmedReading, trimmedDefinition)
+        guard !trimmedCorrectTerm.isEmpty else {
+            alertMessage = "正しい変換を入力してください"
+            showingAlert = true
+            return
+        }
+        
+        guard trimmedWrongTerm != trimmedCorrectTerm else {
+            alertMessage = "誤変換と正しい変換が同じです"
+            showingAlert = true
+            return
+        }
+        
+        onSave(trimmedWrongTerm, trimmedCorrectTerm)
         dismiss()
     }
 }

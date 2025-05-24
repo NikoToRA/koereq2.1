@@ -9,6 +9,7 @@ import Foundation
 import CoreImage
 import UIKit
 
+@MainActor
 class QRService: ObservableObject {
     @Published var generatedQRCode: UIImage?
     @Published var error: Error?
@@ -45,20 +46,13 @@ class QRService: ObservableObject {
         
         let uiImage = UIImage(cgImage: cgImage)
         
-        DispatchQueue.main.async { [weak self] in
-            self?.generatedQRCode = uiImage
-        }
+        self.generatedQRCode = uiImage
         
         return uiImage
     }
     
     func generateQRCodeAsync(from text: String) async -> UIImage? {
-        return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                let qrImage = self?.generateQRCode(from: text)
-                continuation.resume(returning: qrImage)
-            }
-        }
+        return generateQRCode(from: text)
     }
     
     func saveQRCodeToPhotos(_ image: UIImage) {
@@ -66,10 +60,8 @@ class QRService: ObservableObject {
     }
     
     @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        DispatchQueue.main.async { [weak self] in
-            if let error = error {
-                self?.error = QRError.saveFailed(error.localizedDescription)
-            }
+        if let error = error {
+            self.error = QRError.saveFailed(error.localizedDescription)
         }
     }
     

@@ -64,17 +64,16 @@ class PromptManager: ObservableObject {
     
     // MARK: - User Dictionary Management
     
-    func addDictionaryEntry(term: String, reading: String, definition: String) {
-        let newEntry = DictionaryEntry(term: term, reading: reading, definition: definition)
+    func addDictionaryEntry(wrongTerm: String, correctTerm: String) {
+        let newEntry = DictionaryEntry(wrongTerm: wrongTerm, correctTerm: correctTerm)
         userDictionary.append(newEntry)
         saveUserDictionary()
     }
     
-    func updateDictionaryEntry(id: UUID, term: String, reading: String, definition: String) {
+    func updateDictionaryEntry(id: UUID, wrongTerm: String, correctTerm: String) {
         if let index = userDictionary.firstIndex(where: { $0.id == id }) {
-            userDictionary[index].term = term
-            userDictionary[index].reading = reading
-            userDictionary[index].definition = definition
+            userDictionary[index].wrongTerm = wrongTerm
+            userDictionary[index].correctTerm = correctTerm
             userDictionary[index].updatedAt = Date()
             saveUserDictionary()
         }
@@ -88,9 +87,8 @@ class PromptManager: ObservableObject {
     func searchDictionary(query: String) -> [DictionaryEntry] {
         let lowercaseQuery = query.lowercased()
         return userDictionary.filter {
-            $0.term.lowercased().contains(lowercaseQuery) ||
-            $0.reading.lowercased().contains(lowercaseQuery) ||
-            $0.definition.lowercased().contains(lowercaseQuery)
+            $0.wrongTerm.lowercased().contains(lowercaseQuery) ||
+            $0.correctTerm.lowercased().contains(lowercaseQuery)
         }
     }
     
@@ -99,18 +97,13 @@ class PromptManager: ObservableObject {
     func processTextWithDictionary(_ text: String) -> String {
         var processedText = text
         
-        // ユーザー辞書の用語を置換
+        // ユーザー辞書の誤変換を正しい変換に置換
         for entry in userDictionary {
-            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: entry.term))\\b"
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                let range = NSRange(location: 0, length: processedText.utf16.count)
-                processedText = regex.stringByReplacingMatches(
-                    in: processedText,
-                    options: [],
-                    range: range,
-                    withTemplate: "\(entry.term)（\(entry.reading)）"
-                )
-            }
+            processedText = processedText.replacingOccurrences(
+                of: entry.wrongTerm, 
+                with: entry.correctTerm, 
+                options: [.caseInsensitive]
+            )
         }
         
         return processedText
@@ -167,7 +160,7 @@ class PromptManager: ObservableObject {
         }
         
         for entry in importData.userDictionary {
-            if !userDictionary.contains(where: { $0.term == entry.term }) {
+            if !userDictionary.contains(where: { $0.wrongTerm == entry.wrongTerm }) {
                 userDictionary.append(entry)
             }
         }
@@ -197,17 +190,15 @@ struct CustomPrompt: Identifiable, Codable {
 
 struct DictionaryEntry: Identifiable, Codable {
     let id: UUID
-    var term: String
-    var reading: String
-    var definition: String
+    var wrongTerm: String      // STTで誤変換される文字
+    var correctTerm: String    // 正しい変換したい文字
     let createdAt: Date
     var updatedAt: Date
     
-    init(term: String, reading: String, definition: String) {
+    init(wrongTerm: String, correctTerm: String) {
         self.id = UUID()
-        self.term = term
-        self.reading = reading
-        self.definition = definition
+        self.wrongTerm = wrongTerm
+        self.correctTerm = correctTerm
         self.createdAt = Date()
         self.updatedAt = Date()
     }

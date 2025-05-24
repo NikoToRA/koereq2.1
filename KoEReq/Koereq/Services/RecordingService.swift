@@ -29,8 +29,7 @@ class RecordingService: NSObject, ObservableObject {
             try recordingSession.setActive(true)
             
             if #available(iOS 17.0, *) {
-                AVAudioApplication.requestRecordPermission {
-                    [weak self] allowed in
+                AVAudioApplication.requestRecordPermission { allowed in
                     DispatchQueue.main.async {
                         if !allowed {
                             print("Recording permission denied")
@@ -38,7 +37,7 @@ class RecordingService: NSObject, ObservableObject {
                     }
                 }
             } else {
-                recordingSession.requestRecordPermission { [weak self] allowed in
+                recordingSession.requestRecordPermission { allowed in
                     DispatchQueue.main.async {
                         if !allowed {
                             print("Recording permission denied")

@@ -9,12 +9,10 @@ import Foundation
 
 struct User: Codable {
     let facilityId: String
-    let userId: String
     let facilityName: String
     
-    init(facilityId: String, userId: String, facilityName: String) {
+    init(facilityId: String, facilityName: String) {
         self.facilityId = facilityId
-        self.userId = userId
         self.facilityName = facilityName
     }
 }
@@ -34,8 +32,8 @@ class UserManager: ObservableObject {
         loadUser()
     }
     
-    func login(facilityId: String, userId: String, facilityName: String) {
-        let user = User(facilityId: facilityId, userId: userId, facilityName: facilityName)
+    func login(facilityId: String, facilityName: String) {
+        let user = User(facilityId: facilityId, facilityName: facilityName)
         self.currentUser = user
         self.isLoggedIn = true
         saveUser(user)

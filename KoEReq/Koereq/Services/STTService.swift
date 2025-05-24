@@ -9,6 +9,7 @@ import Foundation
 import Speech
 import AVFoundation
 
+@MainActor
 class STTService: ObservableObject {
     @Published var isTranscribing = false
     @Published var transcriptionResult = ""
@@ -65,13 +66,11 @@ class STTService: ObservableObject {
             throw STTError.audioFileNotReadable
         }
 
+        self.isTranscribing = true
+        self.transcriptionResult = "" // Reset previous result
+        self.error = nil // Reset previous error
+        
         return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                self.isTranscribing = true
-                self.transcriptionResult = "" // Reset previous result
-                self.error = nil // Reset previous error
-            }
             
             do {
                 print("[STTService] Initializing AVAudioFile...")
@@ -86,8 +85,7 @@ class STTService: ObservableObject {
                 
                 self.recognitionRequest = request
 
-                recognitionTask = speechRecognizer.recognitionTask(with: request) { [weak self] result, error in
-                    guard let self = self else { return }
+                recognitionTask = speechRecognizer.recognitionTask(with: request) { result, error in
                     
                     var isFinal = false
                     var recognizedText: String? = nil
@@ -107,7 +105,7 @@ class STTService: ObservableObject {
                     }
                     
                     if error != nil || isFinal {
-                        DispatchQueue.main.async {
+                        Task { @MainActor in
                             self.isTranscribing = false
                         }
                         self.recognitionRequest?.endAudio()
@@ -182,9 +180,9 @@ class STTService: ObservableObject {
                 
             } catch let processingError {
                 print("[STTService] Error during audio processing or request setup: \(processingError.localizedDescription)")
-                DispatchQueue.main.async { [weak self] in
-                    self?.isTranscribing = false
-                    self?.error = processingError
+                Task { @MainActor in
+                    self.isTranscribing = false
+                    self.error = processingError
                 }
                 self.recognitionRequest?.endAudio() 
                 self.recognitionTask?.cancel()
@@ -205,16 +203,16 @@ class STTService: ObservableObject {
             recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
             recognitionRequest?.shouldReportPartialResults = true
             
-            recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest!) { [weak self] result, error in
-                DispatchQueue.main.async {
+            recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest!) { result, error in
+                Task { @MainActor in
                     if let error = error {
-                        self?.error = error
-                        self?.stopRealTimeTranscription()
+                        self.error = error
+                        self.stopRealTimeTranscription()
                         return
                     }
                     
                     if let result = result {
-                        self?.transcriptionResult = result.bestTranscription.formattedString
+                        self.transcriptionResult = result.bestTranscription.formattedString
                     }
                 }
             }

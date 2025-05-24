@@ -328,16 +328,19 @@ struct SessionView: View {
         
         Task {
             do {
-                let transcription = try await sttService.transcribe(audioURL: audioURL)
+                let rawTranscription = try await sttService.transcribe(audioURL: audioURL)
+                
+                // ユーザー辞書による変換を適用
+                let processedTranscription = promptManager.processTextWithDictionary(rawTranscription)
                 
                 await MainActor.run {
-                    // チャットにトランスクリプトを追加
-                    let message = ChatMessage(content: transcription, isUser: true, timestamp: Date())
+                    // チャットに変換後のトランスクリプトを追加
+                    let message = ChatMessage(content: processedTranscription, isUser: true, timestamp: Date())
                     chatMessages.append(message)
                     
-                    // セッションにトランスクリプトを保存
+                    // セッションに変換後のトランスクリプトを保存
                     if let currentSession = activeSession {
-                        sessionStore.addTranscript(transcription, to: currentSession)
+                        sessionStore.addTranscript(processedTranscription, to: currentSession)
                         print("[SessionView] stopRecording: activeSession.transcripts.count after addTranscript = \(currentSession.transcripts.count)")
                         if let lastTranscript = currentSession.transcripts.last {
                             print("[SessionView] stopRecording: last transcript added = \(lastTranscript.text)")
@@ -419,7 +422,7 @@ struct SessionView: View {
         inactivityTimer?.invalidate()
         sessionStore.endCurrentSession()
         
-        // Azure Blob Storageにアップロード
+        // Azure Blob Storageアップロード（現在は無効化済み - 24時間ローカルキャッシュを使用）
         if let currentSession = activeSession {
             Task {
                 do {
@@ -506,12 +509,14 @@ struct ChatBubbleView: View {
 }
 
 #Preview {
-    let previewSessionStore = SessionStore()
     let dummySession = Session()
-    previewSessionStore.currentSession = dummySession
     
-    return SessionView()
-        .environmentObject(previewSessionStore)
+    SessionView()
+        .environmentObject({
+            let store = SessionStore()
+            store.currentSession = dummySession
+            return store
+        }())
         .environmentObject(RecordingService())
         .environmentObject(STTService())
         .environmentObject(OpenAIService())
