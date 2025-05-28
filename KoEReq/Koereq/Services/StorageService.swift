@@ -226,8 +226,8 @@ class StorageService: ObservableObject {
     
     private func generateAuthorizationHeader(httpMethod: String, url: URL, contentLength: Int, contentType: String, blobPath: String, dateString: String) throws -> String {
         
-        // Canonicalized Headersの正しい形式
-        let canonicalizedHeaders = "x-ms-blob-type:BlockBlob\nx-ms-date:\(dateString)\nx-ms-version:2020-12-06"
+        // Canonicalized Headersの正しい形式（x-ms-access-tierを追加し、アルファベット順で並べる）
+        let canonicalizedHeaders = "x-ms-access-tier:Cool\nx-ms-blob-type:BlockBlob\nx-ms-date:\(dateString)\nx-ms-version:2020-12-06"
         
         // Canonicalized Resourceの正しい形式（完全なパスを使用）
         let canonicalizedResource = "/\(accountName)/\(containerName)/\(blobPath)"

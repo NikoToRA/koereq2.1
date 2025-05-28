@@ -15,6 +15,9 @@ struct HomeView: View {
     @State private var showingPromptManager = false
     @State private var showingUserDictionary = false
     @State private var navigateToNewSession = false
+    @State private var showingAzureStatus = false
+    @State private var azureConnectionStatus = "未確認"
+    @State private var isTestingAzure = false
     
     var body: some View {
         NavigationStack {
@@ -61,6 +64,15 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingUserDictionary) {
             UserDictionaryView()
+        }
+        .alert("Azure Storage 保存状況", isPresented: $showingAzureStatus) {
+            Button("OK") { }
+        } message: {
+            if azureConnectionStatus == "接続成功" {
+                Text("Azure Storage への保存機能は正常に動作しています。\nセッション終了時にデータが自動保存されます。")
+            } else {
+                Text("Azure Storage への接続に失敗しました。\nネットワークまたは設定をご確認ください。\n\nデータは24時間のローカルキャッシュに保存されます。")
+            }
         }
     }
     
@@ -111,6 +123,21 @@ struct HomeView: View {
                             .font(.caption2)
                     }
                     .foregroundColor(.blue)
+                }
+                
+                Button(action: testAzureConnection) {
+                    VStack(spacing: 2) {
+                        if isTestingAzure {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: azureConnectionStatus == "接続成功" ? "cloud.fill" : "cloud")
+                        }
+                        Text("保存状況")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(azureConnectionStatus == "接続成功" ? .green : 
+                                   azureConnectionStatus == "接続失敗" ? .red : .gray)
                 }
             }
         }
@@ -199,6 +226,29 @@ struct HomeView: View {
     private func logout() {
         userManager.logout()
     }
+    
+    private func testAzureConnection() {
+        isTestingAzure = true
+        azureConnectionStatus = "接続中"
+        
+        Task {
+            do {
+                let isConnected = try await sessionStore.testAzureConnection()
+                await MainActor.run {
+                    azureConnectionStatus = isConnected ? "接続成功" : "接続失敗"
+                    isTestingAzure = false
+                    showingAzureStatus = true
+                }
+            } catch {
+                await MainActor.run {
+                    azureConnectionStatus = "接続失敗"
+                    isTestingAzure = false
+                    showingAzureStatus = true
+                    print("[HomeView] Azure connection test failed: \(error)")
+                }
+            }
+        }
+    }
 }
 
 struct SessionViewWrapper: View {
@@ -231,9 +281,86 @@ struct SessionCardView: View {
         return formatter
     }
     
+    // 転写内容から患者情報を抽出
+    private func extractPatientInfo() -> String {
+        let transcriptText = session.transcripts.map { $0.text }.joined(separator: " ")
+        
+        if transcriptText.isEmpty {
+            return "記録なし"
+        }
+        
+        // より詳細な医療キーワード
+        let patientKeywords = [
+            // 年齢・性別
+            "歳", "才", "男性", "女性", "男", "女", "歳の", "才の",
+            // 主訴・症状
+            "痛い", "痛み", "熱", "発熱", "咳", "頭痛", "腹痛", "胸痛", "息苦しい", "呼吸困難",
+            "めまい", "吐き気", "嘔吐", "下痢", "便秘", "しびれ", "腫れ", "かゆみ", "発疹",
+            "じんましん", "アレルギー", "風邪", "インフルエンザ", "高血圧", "糖尿病",
+            // 部位
+            "頭", "首", "肩", "胸", "背中", "腰", "腹", "お腹", "手", "足", "膝", "関節",
+            "心臓", "肺", "胃", "肝臓", "腎臓", "喉", "目", "耳", "鼻",
+            // 診療情報
+            "初診", "再診", "緊急", "救急", "外来", "紹介", "検査", "診断", "薬", "処方",
+            "血圧", "体温", "脈拍", "血糖値", "検査結果"
+        ]
+        
+        // キーワードを含む文を優先度付きで抽出
+        let sentences = transcriptText.components(separatedBy: CharacterSet(charactersIn: "。！？\n"))
+        var patientInfo: [String] = []
+        var symptomInfo: [String] = []
+        
+        for sentence in sentences {
+            let trimmed = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.count < 5 { continue } // 短すぎる文は除外
+            
+            // 年齢・性別情報を優先
+            if (trimmed.contains("歳") || trimmed.contains("才") || 
+                trimmed.contains("男性") || trimmed.contains("女性")) && 
+               patientInfo.count < 1 {
+                let shortText = String(trimmed.prefix(25))
+                patientInfo.append(shortText + (trimmed.count > 25 ? "..." : ""))
+                continue
+            }
+            
+            // 症状・主訴情報
+            for keyword in patientKeywords {
+                if trimmed.contains(keyword) && symptomInfo.count < 1 {
+                    let shortText = String(trimmed.prefix(35))
+                    if !symptomInfo.contains(where: { $0.contains(shortText.prefix(15)) }) {
+                        symptomInfo.append(shortText + (trimmed.count > 35 ? "..." : ""))
+                    }
+                    break
+                }
+            }
+            
+            if patientInfo.count >= 1 && symptomInfo.count >= 1 {
+                break
+            }
+        }
+        
+        // 結果をまとめる
+        var result: [String] = []
+        result.append(contentsOf: patientInfo)
+        result.append(contentsOf: symptomInfo)
+        
+        if result.isEmpty {
+            // キーワードがない場合は最初の意味のある文を表示
+            for sentence in sentences {
+                let trimmed = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.count >= 10 { // 10文字以上の文
+                    return String(trimmed.prefix(40)) + (trimmed.count > 40 ? "..." : "")
+                }
+            }
+            return "音声記録あり"
+        }
+        
+        return result.joined(separator: " / ")
+    }
+    
     var body: some View {
         HStack(spacing: 12) {
-            // 日時表示
+            // 日時表示（維持）
             VStack(spacing: 4) {
                 Text(dateFormatter.string(from: session.startedAt))
                     .font(.caption)
@@ -246,13 +373,12 @@ struct SessionCardView: View {
             }
             .frame(width: 40)
             
-            // セッション情報
-            VStack(alignment: .leading, spacing: 4) {
+            // 患者情報メイン表示
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text(session.summary.isEmpty ? "音声記録セッション" : session.summary)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .lineLimit(2)
+                    Text("患者情報")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     
                     Spacer()
                     
@@ -267,18 +393,21 @@ struct SessionCardView: View {
                     }
                 }
                 
+                // 患者の特徴的情報を表示
+                Text(extractPatientInfo())
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .lineLimit(2)
+                    .foregroundColor(.primary)
+                
+                // 記録数のみ表示（時間情報削除）
                 HStack(spacing: 12) {
-                    Label("\(session.transcripts.count)", systemImage: "waveform")
+                    Label("\(session.transcripts.count)件記録", systemImage: "waveform")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     
-                    Label("\(session.aiResponses.count)", systemImage: "brain")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    
-                    if let endedAt = session.endedAt {
-                        let duration = Int(endedAt.timeIntervalSince(session.startedAt) / 60)
-                        Text("\(duration)分")
+                    if session.aiResponses.count > 0 {
+                        Label("\(session.aiResponses.count)件応答", systemImage: "brain")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
