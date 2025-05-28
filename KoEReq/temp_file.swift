@@ -27,8 +27,7 @@ struct SessionView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var lastAIResponse = ""
-    @State private var showingUploadStatus = false
-    @State private var uploadMessage = ""
+    @State private var inactivityTimer: Timer?
     
     @Environment(\.dismiss) private var dismiss
     
@@ -61,11 +60,6 @@ struct SessionView: View {
                 processingOverlay
             }
             
-            // アップロード状態オーバーレイ
-            if showingUploadStatus {
-                uploadStatusOverlay
-            }
-            
             // 医療記録ガイドオーバーレイ（フッターを除外）
             if showingMedicalGuide {
                 VStack(spacing: 0) {
@@ -81,13 +75,11 @@ struct SessionView: View {
         .navigationBarHidden(true)
         .onAppear {
             setupSession()
+            startInactivityTimer()
         }
         .onChange(of: activeSession?.id) {
             // セッションが変更された際にチャットメッセージを再読み込み
             loadChatMessages()
-        }
-        .onChange(of: storageService.isUploading) {
-            handleUploadStatusChange()
         }
         .onDisappear {
             endSession()
@@ -308,49 +300,6 @@ struct SessionView: View {
         }
     }
     
-    private var uploadStatusOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 16) {
-                // アップロード中の場合は進捗インジケーターを表示
-                if storageService.isUploading {
-                    ProgressView()
-                        .scaleEffect(1.2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                    
-                    // 進捗パーセンテージ（0-100%）
-                    if storageService.uploadProgress > 0 {
-                        ProgressView(value: storageService.uploadProgress, total: 1.0)
-                            .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                            .frame(width: 200)
-                        
-                        Text("\(Int(storageService.uploadProgress * 100))%")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                } else {
-                    // 完了/エラー時のアイコン
-                    Image(systemName: storageService.error != nil ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                        .font(.largeTitle)
-                        .foregroundColor(storageService.error != nil ? .red : .green)
-                }
-                
-                Text(uploadMessage)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(24)
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(radius: 10)
-        }
-        .transition(.opacity)
-        .animation(.easeInOut, value: showingUploadStatus)
-    }
-    
     // MARK: - Actions
     
     private func setupSession() {
@@ -395,6 +344,8 @@ struct SessionView: View {
     }
     
     private func toggleRecording() {
+        resetInactivityTimer()
+        
         if recordingService.isRecording {
             stopRecording()
         } else {
@@ -416,31 +367,19 @@ struct SessionView: View {
                 let rawTranscription = try await sttService.transcribe(audioURL: audioURL)
                 
                 // ユーザー辞書による変換を適用
-                let dictionaryProcessedTranscription = promptManager.processTextWithDictionary(rawTranscription)
-                
-                // 相対時間変換を適用
-                let relativeTimeResult = sttService.parseRelativeTimeFromText(dictionaryProcessedTranscription)
-                let finalProcessedTranscription = relativeTimeResult.processedText
+                let processedTranscription = promptManager.processTextWithDictionary(rawTranscription)
                 
                 await MainActor.run {
-                    // チャットに最終変換後のトランスクリプトを追加
-                    let message = ChatMessage(content: finalProcessedTranscription, isUser: true, timestamp: Date())
+                    // チャットに変換後のトランスクリプトを追加
+                    let message = ChatMessage(content: processedTranscription, isUser: true, timestamp: Date())
                     chatMessages.append(message)
                     
-                    // セッションに最終変換後のトランスクリプトを保存
+                    // セッションに変換後のトランスクリプトを保存
                     if let currentSession = activeSession {
-                        sessionStore.addTranscript(finalProcessedTranscription, to: currentSession)
+                        sessionStore.addTranscript(processedTranscription, to: currentSession)
                         print("[SessionView] stopRecording: activeSession.transcripts.count after addTranscript = \(currentSession.transcripts.count)")
                         if let lastTranscript = currentSession.transcripts.last {
                             print("[SessionView] stopRecording: last transcript added = \(lastTranscript.text)")
-                        }
-                        
-                        // デバッグ情報を出力
-                        if !relativeTimeResult.detectedDates.isEmpty {
-                            print("[SessionView] 検出された時間表現: \(relativeTimeResult.detectedDates.count)件")
-                            for detectedDate in relativeTimeResult.detectedDates {
-                                print("  - \(detectedDate.originalText) → 計算結果: \(detectedDate.calculatedDate)")
-                            }
                         }
                     }
                     
@@ -456,6 +395,7 @@ struct SessionView: View {
     }
     
     private func togglePromptSelector() {
+        resetInactivityTimer()
         withAnimation(.easeInOut(duration: 0.3)) {
             showingPromptSelector.toggle()
         }
@@ -515,15 +455,33 @@ struct SessionView: View {
     }
     
     private func endSession() {
-        // 録音が進行中の場合は停止
-        if recordingService.isRecording {
-            stopRecording()
-        }
-        
-        // セッション終了処理（SessionStoreで自動的にAzureアップロードが実行される）
+        inactivityTimer?.invalidate()
         sessionStore.endCurrentSession()
         
-        print("[SessionView] Session ended and Azure upload initiated")
+        // Azure Blob Storageアップロード（現在は無効化済み - 24時間ローカルキャッシュを使用）
+        if let currentSession = activeSession {
+            Task {
+                do {
+                    let audioFiles = [currentAudioURL].compactMap { $0 }
+                    try await storageService.uploadSession(currentSession, audioFiles: audioFiles)
+                } catch {
+                    print("Upload failed: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func startInactivityTimer() {
+        inactivityTimer = Timer.scheduledTimer(withTimeInterval: 1800, repeats: false) { _ in
+            // 30分無操作で自動終了
+            endSession()
+            dismiss()
+        }
+    }
+    
+    private func resetInactivityTimer() {
+        inactivityTimer?.invalidate()
+        startInactivityTimer()
     }
     
     private func formatSessionTime() -> String {
@@ -536,24 +494,6 @@ struct SessionView: View {
     private func showError(_ message: String) {
         errorMessage = message
         showingError = true
-    }
-    
-    private func handleUploadStatusChange() {
-        if storageService.isUploading {
-            uploadMessage = "セッションデータをAzureにアップロード中..."
-            showingUploadStatus = true
-        } else {
-            if storageService.error != nil {
-                uploadMessage = "アップロードに失敗しました"
-            } else {
-                uploadMessage = "アップロード完了"
-            }
-            
-            // 2秒後に状態表示を隠す
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                showingUploadStatus = false
-            }
-        }
     }
 }
 
@@ -757,45 +697,20 @@ struct MedicalGuideOverlay: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // 全画面の半透明背景（タップ＆スワイプ対応）
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea(.all)
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            isShowing = false
+                // 半透明背景（フッター部分を除外）
+                VStack(spacing: 0) {
+                    Color.black.opacity(0.3)
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isShowing = false
+                            }
                         }
-                    }
-                    .gesture(
-                        // 背景での左右スワイプジェスチャー
-                        DragGesture()
-                            .onChanged { value in
-                                // 左右スワイプの場合のみ反応
-                                if abs(value.translation.width) > abs(value.translation.height) {
-                                    dragOffset = value.translation.width
-                                }
-                            }
-                            .onEnded { value in
-                                let horizontalDistance = value.translation.width
-                                let horizontalVelocity = abs(value.velocity.width)
-                                
-                                // 左右スワイプで消える（背景でも反応）
-                                if abs(horizontalDistance) > 80 || horizontalVelocity > 400 {
-                                    // ハプティクフィードバック
-                                    let impact = UIImpactFeedbackGenerator(style: .medium)
-                                    impact.impactOccurred()
-                                    
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        isShowing = false
-                                        dragOffset = 0
-                                    }
-                                } else {
-                                    // 元の位置に戻る
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        dragOffset = 0
-                                    }
-                                }
-                            }
-                    )
+                    
+                    // フッター部分は背景を適用しない
+                    Color.clear
+                        .frame(height: 120)
+                }
+                .ignoresSafeArea()
                 
                 // メインオーバーレイ
                 VStack(spacing: 0) {
@@ -824,67 +739,25 @@ struct MedicalGuideOverlay: View {
                             .padding(.bottom, 16)
                         }
                     }
-                    .frame(height: max(200, geometry.size.height * 0.7))
+                    .frame(height: max(200, geometry.size.height - geometry.safeAreaInsets.top - geometry.safeAreaInsets.bottom - 120) + dragOffset)
                     .background(Color(.systemBackground))
                     .medicalCornerRadius(20, corners: [.bottomLeft, .bottomRight])
                     .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-                    .offset(x: dragOffset, y: 0)
+                    .offset(y: min(0, dragOffset))
                     .gesture(
-                        // メインコンテンツでの左右スワイプジェスチャー（優先度高）
                         DragGesture()
                             .onChanged { value in
-                                // 左右スワイプの場合は横方向の移動を追跡
-                                if abs(value.translation.width) > abs(value.translation.height) {
-                                    dragOffset = value.translation.width
-                                } else {
-                                    // 上下方向は従来通り（下スワイプで閉じる）
-                                    if value.translation.height > 50 {
-                                        dragOffset = value.translation.height * 0.3 // 抵抗感を追加
-                                    }
-                                }
+                                dragOffset = value.translation.height
                             }
                             .onEnded { value in
-                                let horizontalDistance = value.translation.width
-                                let verticalDistance = value.translation.height
-                                let horizontalVelocity = abs(value.velocity.width)
-                                let verticalVelocity = abs(value.velocity.height)
-                                
-                                // 左右スワイプで消える（メイン機能）
-                                if abs(horizontalDistance) > abs(verticalDistance) {
-                                    if abs(horizontalDistance) > 80 || horizontalVelocity > 400 {
-                                        // ハプティクフィードバック
-                                        let impact = UIImpactFeedbackGenerator(style: .medium)
-                                        impact.impactOccurred()
-                                        
-                                        // スワイプした方向に消える演出
-                                        let exitDirection: CGFloat = horizontalDistance > 0 ? geometry.size.width + 100 : -geometry.size.width - 100
-                                        
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                            dragOffset = exitDirection
-                                        }
-                                        
-                                        // 少し遅れてオーバーレイを閉じる
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                            isShowing = false
-                                            dragOffset = 0
-                                        }
-                                    } else {
-                                        // 元の位置に戻る
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                            dragOffset = 0
-                                        }
-                                    }
-                                }
-                                // 下方向ドラッグで閉じる（補助機能）
-                                else if verticalDistance > 120 || (verticalDistance > 60 && verticalVelocity > 500) {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                let threshold: CGFloat = -50
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    if value.translation.height < threshold {
+                                        // 上にドラッグして閉じる
                                         isShowing = false
                                         dragOffset = 0
-                                    }
-                                }
-                                // 元の位置に戻る
-                                else {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    } else {
+                                        // 元の位置に戻る
                                         dragOffset = 0
                                     }
                                 }
@@ -892,55 +765,44 @@ struct MedicalGuideOverlay: View {
                     )
                     
                     Spacer()
-                        .frame(height: 120) // フッター分のスペースを確保
                 }
             }
         }
     }
     
     private var dragHandle: some View {
-        VStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Color.secondary.opacity(0.5))
-                .frame(width: 36, height: 4)
-            
-            // ドラッグヒント（左右スワイプ用）
-            Text("← 左右スワイプで閉じる →")
-                .font(.caption2)
-                .foregroundColor(.secondary.opacity(0.7))
-                .padding(.top, 2)
-        }
-        .padding(.top, 8)
-        .padding(.bottom, 6)
+        RoundedRectangle(cornerRadius: 3)
+            .fill(Color.secondary.opacity(0.4))
+            .frame(width: 40, height: 4)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
     }
     
     private var overlayHeaderView: some View {
         HStack {
-            Button("✕ 閉じる") {
+            Button("閉じる") {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isShowing = false
                 }
             }
             .foregroundColor(.blue)
-            .font(.subheadline)
+            .font(.caption)
             .fontWeight(.medium)
             
             Spacer()
             
             Text("医療記録入力ガイド")
-                .font(.subheadline)
-                .fontWeight(.semibold)
+                .font(.system(size: 10))
+                .fontWeight(.medium)
             
             Spacer()
             
-            // 操作ヒント
-            Text("背景タップで閉じる")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+            // バランス調整用のスペース
+            Color.clear
+                .frame(width: 30)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
+        .padding(.horizontal, 8)
+        .frame(height: 20)
     }
 }
 
@@ -1013,6 +875,7 @@ struct MedicalCategoryCard: View {
 enum MedicalCategory: CaseIterable {
     case basicInfo
     case medicalHistory
+    case currentCondition
     case vitalSigns
     case physicalExam
     case diagnostics
@@ -1024,6 +887,8 @@ enum MedicalCategory: CaseIterable {
             return "基本情報"
         case .medicalHistory:
             return "病歴・既往歴"
+        case .currentCondition:
+            return "現在の状態"
         case .vitalSigns:
             return "バイタルサイン"
         case .physicalExam:
@@ -1041,6 +906,8 @@ enum MedicalCategory: CaseIterable {
             return "person.fill"
         case .medicalHistory:
             return "clock.fill"
+        case .currentCondition:
+            return "heart.fill"
         case .vitalSigns:
             return "waveform.path.ecg"
         case .physicalExam:
@@ -1058,6 +925,8 @@ enum MedicalCategory: CaseIterable {
             return .blue
         case .medicalHistory:
             return .orange
+        case .currentCondition:
+            return .red
         case .vitalSigns:
             return .green
         case .physicalExam:
@@ -1087,83 +956,4 @@ enum MedicalCategory: CaseIterable {
                 "内服薬（現在服用中の薬剤名）",
                 "生活歴（居住形態（施設など）、ADL、喫煙・飲酒）"
             ]
-        case .vitalSigns:
-            return [
-                "意識レベルGCS（E, V, M）、瞳孔所見など",
-                "血圧（収縮期/拡張期 mmHg）",
-                "脈拍（回/分、リズム）",
-                "SpO2（%、室内気または酸素下）",
-                "酸素投与量（L/分、投与方法）",
-                "呼吸数（回/分）",
-                "体温（℃）"
-            ]
-        case .physicalExam:
-            return [
-                "外観・全身状態",
-                "頭頸部所見",
-                "胸部所見（心音・呼吸音）",
-                "腹部所見",
-                "四肢所見",
-                "皮膚所見",
-                "神経学的所見"
-            ]
-        case .diagnostics:
-            return [
-                "血液検査結果",
-                "画像検査結果（X線・CT・MRIなど）",
-                "心電図所見",
-                "その他の検査結果",
-                "診断名・病名",
-                "病期・重症度"
-            ]
-        case .treatment:
-            return [
-                "治療方針・計画",
-                "処方薬剤の変更",
-                "処置・手技の実施",
-                "患者・家族への説明内容",
-                "今後の予定・フォローアップ",
-                "注意事項・指導内容"
-            ]
-        }
-    }
-}
 
-// MARK: - Extensions for Medical Guide
-
-extension View {
-    func medicalCornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(MedicalRoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct MedicalRoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(
-            roundedRect: rect,
-            byRoundingCorners: corners,
-            cornerRadii: CGSize(width: radius, height: radius)
-        )
-        return Path(path.cgPath)
-    }
-}
-
-#Preview {
-    let dummySession = Session()
-    
-    SessionView()
-        .environmentObject({
-            let store = SessionStore()
-            store.currentSession = dummySession
-            return store
-        }())
-        .environmentObject(RecordingService())
-        .environmentObject(STTService())
-        .environmentObject(OpenAIService())
-        .environmentObject(StorageService())
-        .environmentObject(QRService())
-        .environmentObject(PromptManager())
-}

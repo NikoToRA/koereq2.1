@@ -376,4 +376,4 @@ extension AIResponse {
         self.createdAt = createdAt
         self.sequence = sequence
     }
-}
+} 

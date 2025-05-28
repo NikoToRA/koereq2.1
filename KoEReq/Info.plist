@@ -117,5 +117,15 @@
 	<string>public.app-category.medical</string>
 	<key>AzureOpenAIAPIKey</key>
 	<string>YOUR_AZURE_OPENAI_API_KEY_HERE</string>
+	
+	<!-- Azure Storage Configuration -->
+	<key>AzureStorageConnectionString</key>
+	<string>$(AZURE_STORAGE_CONNECTION_STRING)</string>
+	<key>AzureStorageContainerName</key>
+	<string>$(AZURE_STORAGE_CONTAINER_NAME)</string>
+	<key>AzureStorageAccountName</key>
+	<string>$(AZURE_STORAGE_ACCOUNT_NAME)</string>
+	<key>AzureStorageAccountKey</key>
+	<string>$(AZURE_STORAGE_ACCOUNT_KEY)</string>
 </dict>
 </plist>

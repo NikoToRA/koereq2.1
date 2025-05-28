@@ -71,28 +71,42 @@ class RelativeTimeParser {
         // 分単位
         TimePattern(pattern: #"(\d+)分前"#, unit: .minute, multiplier: -1),
         TimePattern(pattern: #"(\d+)分後"#, unit: .minute, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)分後"#, unit: .minute, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)分前"#, unit: .minute, multiplier: -1),
         
         // 時間単位
         TimePattern(pattern: #"(\d+)時間前"#, unit: .hour, multiplier: -1),
         TimePattern(pattern: #"(\d+)時間後"#, unit: .hour, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)時間後"#, unit: .hour, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)時間前"#, unit: .hour, multiplier: -1),
         
         // 日単位
         TimePattern(pattern: #"(\d+)日前"#, unit: .day, multiplier: -1),
         TimePattern(pattern: #"(\d+)日後"#, unit: .day, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)日後"#, unit: .day, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)日前"#, unit: .day, multiplier: -1),
         
         // 週単位
         TimePattern(pattern: #"(\d+)週間前"#, unit: .weekOfYear, multiplier: -1),
         TimePattern(pattern: #"(\d+)週間後"#, unit: .weekOfYear, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)週間後"#, unit: .weekOfYear, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)週間前"#, unit: .weekOfYear, multiplier: -1),
         
         // 月単位
         TimePattern(pattern: #"(\d+)ヶ月前"#, unit: .month, multiplier: -1),
         TimePattern(pattern: #"(\d+)ヶ月後"#, unit: .month, multiplier: 1),
         TimePattern(pattern: #"(\d+)か月前"#, unit: .month, multiplier: -1),
         TimePattern(pattern: #"(\d+)か月後"#, unit: .month, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)ヶ月後"#, unit: .month, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)ヶ月前"#, unit: .month, multiplier: -1),
+        TimePattern(pattern: #"今から(\d+)か月後"#, unit: .month, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)か月前"#, unit: .month, multiplier: -1),
         
         // 年単位
         TimePattern(pattern: #"(\d+)年前"#, unit: .year, multiplier: -1),
         TimePattern(pattern: #"(\d+)年後"#, unit: .year, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)年後"#, unit: .year, multiplier: 1),
+        TimePattern(pattern: #"今から(\d+)年前"#, unit: .year, multiplier: -1),
         
         // 特殊表現
         TimePattern(pattern: "昨日", unit: .day, multiplier: -1),

@@ -26,7 +26,8 @@ class PromptManager: ObservableObject {
         return [
             .medicalChart,
             .referralLetter,
-            .consultation
+            .consultation,
+            .emergencyTeamInfo
         ]
     }
     

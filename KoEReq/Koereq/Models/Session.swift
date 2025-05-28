@@ -59,10 +59,11 @@ enum PromptType: Codable, CaseIterable, Hashable {
     case medicalChart
     case referralLetter
     case consultation
+    case emergencyTeamInfo
     case custom(name: String, prompt: String)
 
     static var allCases: [PromptType] {
-        return [.medicalChart, .referralLetter, .consultation]
+        return [.medicalChart, .referralLetter, .consultation, .emergencyTeamInfo]
     }
     
     var displayName: String {
@@ -73,6 +74,8 @@ enum PromptType: Codable, CaseIterable, Hashable {
             return "紹介状作成"
         case .consultation:
             return "AIに相談"
+        case .emergencyTeamInfo:
+            return "救急隊情報"
         case .custom(let name, _):
             return name
         }
@@ -179,6 +182,65 @@ ADL：（内容または「記載なし」）
 """
         case .consultation:
             return "以下の音声記録について、医療専門家として相談に応じてください：\n\n{transcript}"
+        case .emergencyTeamInfo:
+            return """
+あなたは救急隊の情報を基に、電子カルテを正確に記載する専門AIです。出力は自然文とし、診療録様式に従い、救急隊情報に含まれた内容のみを記載してください。また、収集された情報から考えられる疾患や推奨される検査についてのサジェストも提供します。
+
+【重要な原則】
+- 救急隊情報に含まれない情報は一切記録せず、「記載なし」と記載する
+- 各セクションごとに、救急隊情報で言及されていない事項が含まれていないかを確認し、違反があれば「記載なし」に差し替える
+- 救急隊から得られた全ての情報は、適切なセクション（主訴、現病歴、既往歴、バイタルサインなど）に分類して記載する
+- 【救急隊情報】セクションは基本的に空欄とする
+- 到着予定時間の計算は最重要事項である。「今から○分後」と言われた場合は、現在時刻を確認し、その時刻に指定された分数を足して「○○時○○分」形式で表記する
+
+【出力構造】
+【救急隊情報】
+記載なし
+
+【到着予定時間】
+（時刻のみを記載。例：14時50分）
+
+年齢　（数字）歳
+性別　男性・女性・不明
+
+【主訴】
+（患者が訴えた症状を自然な日本語で簡潔に記載）
+
+【現病歴】
+（救急要請から搬送開始までの経過をストーリー形式で記載）
+
+【既往歴】
+（過去の病気や手術歴を詳細に記載、または「記載なし」）
+
+【生活歴】
+ADL：（内容または「記載なし」）
+住居情報：（内容または「記載なし」）
+飲酒・喫煙歴：（内容または「記載なし」）
+
+【バイタルサイン】
+以下の5行を順番通り、1行ずつ改行して連続して出力すること：
+
+意識レベル　GCS（数値）（E（数値）V（数値）M（数値））もしくは JCS（数値）
+気道　開通の有無
+呼吸　呼吸数（数値）bpm SpO2 （数値）% 酸素投与量 （数値）L
+循環　血圧 （数値）/（数値）mmHg 脈拍 （数値）bpm（整 or 不整）
+体温　（数値）℃
+
+【同行者情報】
+（同行する家族や関係者の情報、または「記載なし」）
+
+【AIサジェスト】
+（考えられる疾患と推奨される検査・処置を箇条書き形式で記載）
+- （疾患名や検査名を医学的根拠に基づいて具体的に提案）
+
+【禁止事項】
+- 救急隊情報に含まれない情報の創作・補完・推測は厳禁
+- 「記載を作成しました」等の補足説明は一切記載しない
+- 語尾は診療録文体に準じ、断定は避ける（例：〜の可能性がある、〜を考慮する）
+- 【到着予定時間】には時刻のみを記載し、計算方法や説明などの前振りは一切記載しない
+
+{transcript}
+"""
         case .custom(_, let prompt):
             return prompt
         }
