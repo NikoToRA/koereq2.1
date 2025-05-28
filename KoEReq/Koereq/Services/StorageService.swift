@@ -229,6 +229,16 @@ class StorageService: ObservableObject {
         // Canonicalized Headersの正しい形式（x-ms-access-tierを追加し、アルファベット順で並べる）
         let canonicalizedHeaders = "x-ms-access-tier:Cool\nx-ms-blob-type:BlockBlob\nx-ms-date:\(dateString)\nx-ms-version:2020-12-06"
         
+        // デバッグ用: 個別ヘッダーの確認
+        print("[StorageService DEBUG] ========== AUTHORIZATION HEADER GENERATION ==========")
+        print("[StorageService DEBUG] HTTP Method: \(httpMethod)")
+        print("[StorageService DEBUG] Content Length: \(contentLength)")
+        print("[StorageService DEBUG] Content Type: \(contentType)")
+        print("[StorageService DEBUG] Blob Path: \(blobPath)")
+        print("[StorageService DEBUG] Date String: \(dateString)")
+        print("[StorageService DEBUG] Account Name: \(accountName)")
+        print("[StorageService DEBUG] Container Name: \(containerName)")
+        
         // Canonicalized Resourceの正しい形式（完全なパスを使用）
         let canonicalizedResource = "/\(accountName)/\(containerName)/\(blobPath)"
         
@@ -250,10 +260,15 @@ class StorageService: ObservableObject {
             canonicalizedResource         // CanonicalizedResource
         ].joined(separator: "\n")
         
-        print("[StorageService DEBUG] Date: \(dateString)")
-        print("[StorageService DEBUG] Canonicalized Headers: \(canonicalizedHeaders)")
+        print("[StorageService DEBUG] Canonicalized Headers (with newlines): \(canonicalizedHeaders.debugDescription)")
         print("[StorageService DEBUG] Canonicalized Resource: \(canonicalizedResource)")
-        print("[StorageService DEBUG] String to sign: \(stringToSign)")
+        print("[StorageService DEBUG] String to sign (with newlines): \(stringToSign.debugDescription)")
+        print("[StorageService DEBUG] String to sign preview:")
+        let lines = stringToSign.components(separatedBy: "\n")
+        for (index, line) in lines.enumerated() {
+            print("[StorageService DEBUG]   Line \(index): '\(line)'")
+        }
+        print("[StorageService DEBUG] ====================================================")
         
         guard let keyData = Data(base64Encoded: accountKey) else {
             throw StorageError.invalidConnectionString
