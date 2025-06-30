@@ -7,6 +7,211 @@
 
 import SwiftUI
 
+// MARK: - 一時的なMedicalGuideManager実装
+struct SimpleGuideSet: Identifiable, Codable {
+    let id: UUID
+    var name: String
+    var description: String
+    var categories: [MedicalGuideCategory]
+    var isDefault: Bool
+    
+    init(id: UUID = UUID(), name: String, description: String, categories: [MedicalGuideCategory], isDefault: Bool = false) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.categories = categories
+        self.isDefault = isDefault
+    }
+}
+
+class SimpleMedicalGuideManager: ObservableObject {
+    @Published var guideSets: [SimpleGuideSet] = []
+    @Published var selectedGuideSetId: UUID?
+    
+    private let userDefaults = UserDefaults.standard
+    private let guideSetsKey = "simpleGuideSets"
+    private let selectedGuideKey = "selectedSimpleGuideId"
+    
+    var selectedGuideSet: SimpleGuideSet? {
+        guideSets.first { $0.id == selectedGuideSetId }
+    }
+    
+    var currentCategories: [MedicalGuideCategory] {
+        selectedGuideSet?.categories.filter { $0.isEnabled } ?? MedicalGuideCategory.defaultCategories
+    }
+    
+    init() {
+        // UserDefaultsをクリア（一時的）
+        userDefaults.removeObject(forKey: guideSetsKey)
+        userDefaults.removeObject(forKey: selectedGuideKey)
+        
+        loadGuideSets()
+        loadSelectedGuide()
+    }
+    
+    private func loadGuideSets() {
+        // 一時的に強制的に新しいガイドセットを作成
+        createDefaultGuideSets()
+        
+        // 以下は後で有効にする（今はコメントアウト）
+        /*
+        if let data = userDefaults.data(forKey: guideSetsKey),
+           let decodedSets = try? JSONDecoder().decode([SimpleGuideSet].self, from: data) {
+            guideSets = decodedSets
+        } else {
+            // 初回起動時はデフォルトを作成
+            createDefaultGuideSets()
+        }
+        */
+    }
+    
+    private func createDefaultGuideSets() {
+        let emergencyNursingCategories = [
+            MedicalGuideCategory(
+                title: "ER経過観察記録",
+                icon: "cross.case.fill",
+                colorHex: "#FF2D55",
+                items: [
+                    "搬送（救急車）",
+                    "妊娠",
+                    "付き添い",
+                    "持ち物",
+                    "確認者",
+                    "受け取り者",
+                    "症候",
+                    "経過",
+                    "既往歴",
+                    "アレルギー"
+                ],
+                order: 0
+            ),
+            MedicalGuideCategory(
+                title: "入退院支援チェックリスト",
+                icon: "house.fill",
+                colorHex: "#007AFF",
+                items: [
+                    "キーパーソン",
+                    "同居人の有無（あり／なし／記載なし）",
+                    "住宅（自宅／施設）",
+                    "生活環境（戸建て／集合住宅・段差利用）",
+                    "ADL",
+                    "各種手帳（身体障害／精神障害）",
+                    "介護認定（あり／なし／申請中）",
+                    "利用中のサービス",
+                    "生活保護受給",
+                    "職業",
+                    "障害高齢者の日常生活自立度：\n• J1: 交通機関などを利用して外出\n• J2: 隣近所へなら外出\n• A1: 介助により外出し、日中はほとんどベッドから離れて生活\n• A2: 外出の頻度が少なく、日中寝たり起きたりの生活\n• B1: 車椅子に移乗し、食事、排泄はベッドから離れて行う\n• B2: 介助により車椅子に移乗\n• C1: 自力で寝返りをうつ\n• C2: 自力で寝返りがうてない",
+                    "認知症高齢者の日常生活自立度：\n• Ⅰ: 自立\n• Ⅰa: 見守りが必要（家庭外）\n• Ⅰb: 見守りが必要（家庭内）\n• Ⅱa: 日中中心に日常生活に支障を来たすような行動・意思疎通の困難さ、介助が必要\n• Ⅱb: 夜間中心に日常生活に支障を来たすような行動・意思疎通の困難さ、介助が必要\n• Ⅲ: 日常生活に支障を来たすような行動・意思疎通の困難さが頻繁で、常に介助が必要\n• Ⅳ: 著しい精神症状や問題行動などがみられ、専門医療が必要"
+                ],
+                order: 1
+            ),
+            MedicalGuideCategory(
+                title: "来院時評価",
+                icon: "clock.fill",
+                colorHex: "#FF9500",
+                items: [
+                    "来院時間",
+                    "感染対策",
+                    "第一印象（ショック兆候の有無）",
+                    "蒼白、冷感、虚脱",
+                    "脈拍触知不能、呼吸不全"
+                ],
+                order: 2
+            ),
+            MedicalGuideCategory(
+                title: "一次評価（ABCDE）",
+                icon: "waveform.path.ecg",
+                colorHex: "#34C759",
+                items: [
+                    "A（気道）",
+                    "B（呼吸）：呼吸数・SpO2・呼吸異常・補助筋使用",
+                    "気管偏位・頸静脈怒張・呼吸音減弱",
+                    "肺副雑音・皮下気腫",
+                    "C（循環）：HR・BP・チアノーゼ・CRT",
+                    "皮膚の湿潤・顔面蒼白",
+                    "D（意識）：GCS E-V-M",
+                    "E（体温）・四肢冷感・皮膚湿潤",
+                    "QSOFA：スコア（0〜3）"
+                ],
+                order: 3
+            ),
+            MedicalGuideCategory(
+                title: "感染スクリーニング",
+                icon: "shield.fill",
+                colorHex: "#AF52DE",
+                items: [
+                    "過去1ヶ月以内の感染歴（あり／なし）",
+                    "過去3日以内の陽性者との接触（あり／なし）"
+                ],
+                order: 4
+            ),
+            MedicalGuideCategory(
+                title: "初療確認事項",
+                icon: "stethoscope",
+                colorHex: "#5856D6",
+                items: [
+                    "移動方法",
+                    "名前・生年月日確認",
+                    "最終飲食",
+                    "飲酒",
+                    "喫煙",
+                    "最終排泄"
+                ],
+                order: 5
+            ),
+            MedicalGuideCategory(
+                title: "入院・帰宅前チェック",
+                icon: "checklist",
+                colorHex: "#FF9500",
+                items: [
+                    "入院・帰宅前チェックリスト確認",
+                    "時系列記録まとめ",
+                    "HH:MM 出来事（簡潔に記録）"
+                ],
+                order: 6
+            )
+        ]
+        
+        guideSets = [
+            SimpleGuideSet(
+                name: "一般医療",
+                description: "一般的な医療記録に適用される標準的なガイド",
+                categories: MedicalGuideCategory.defaultCategories,
+                isDefault: true
+            ),
+            SimpleGuideSet(
+                name: "救急看護",
+                description: "救急外来での看護記録に特化したガイド（ER経過観察記録対応）",
+                categories: emergencyNursingCategories,
+                isDefault: false
+            )
+        ]
+        saveGuideSets()
+    }
+    
+    private func loadSelectedGuide() {
+        if let savedIdString = userDefaults.string(forKey: selectedGuideKey),
+           let savedId = UUID(uuidString: savedIdString) {
+            selectedGuideSetId = savedId
+        } else {
+            // デフォルトを選択
+            selectedGuideSetId = guideSets.first { $0.isDefault }?.id
+        }
+    }
+    
+    private func saveGuideSets() {
+        if let encoded = try? JSONEncoder().encode(guideSets) {
+            userDefaults.set(encoded, forKey: guideSetsKey)
+        }
+    }
+    
+    func selectGuideSet(_ guideSet: SimpleGuideSet) {
+        selectedGuideSetId = guideSet.id
+        userDefaults.set(guideSet.id.uuidString, forKey: selectedGuideKey)
+        objectWillChange.send() // 変更を通知
+    }
+}
+
 struct SessionView: View {
     @EnvironmentObject var sessionStore: SessionStore
     @EnvironmentObject var recordingService: RecordingService
@@ -15,6 +220,7 @@ struct SessionView: View {
     @EnvironmentObject var storageService: StorageService
     @EnvironmentObject var qrService: QRService
     @EnvironmentObject var promptManager: PromptManager
+    @EnvironmentObject var simpleMedicalGuideManager: SimpleMedicalGuideManager
     
     @State private var showingPromptSelector = false
     @State private var showingQRCode = false
@@ -69,7 +275,7 @@ struct SessionView: View {
             // 医療記録ガイドオーバーレイ（フッターを除外）
             if showingMedicalGuide {
                 VStack(spacing: 0) {
-                    MedicalGuideOverlay(isShowing: $showingMedicalGuide)
+                    MedicalGuideOverlay(isShowing: $showingMedicalGuide, simpleMedicalGuideManager: simpleMedicalGuideManager)
                         .transition(.move(edge: .top).combined(with: .opacity))
                         .animation(.easeInOut(duration: 0.3), value: showingMedicalGuide)
                     
@@ -233,6 +439,24 @@ struct SessionView: View {
     
     private var promptSelectorView: some View {
         VStack(spacing: 8) {
+            // 救急看護師専用ボタン（デフォルト）
+            Button(action: { generateNursingResponse() }) {
+                HStack {
+                    Image(systemName: "cross.case.fill")
+                        .foregroundColor(.pink)
+                    Text("救急看護記録")
+                        .fontWeight(.medium)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                }
+                .foregroundColor(.primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.pink.opacity(0.1))
+                .cornerRadius(8)
+            }
+            
             ForEach(promptManager.allPrompts, id: \.displayName) { promptType in
                 Button(action: { selectPrompt(promptType) }) {
                     HStack {
@@ -514,6 +738,148 @@ struct SessionView: View {
         }
     }
     
+    private func generateNursingResponse() {
+        guard let currentActiveSession = activeSession else {
+            showError("現在のセッションがアクティブではありません。")
+            isProcessing = false
+            return
+        }
+
+        guard !currentActiveSession.transcripts.isEmpty else {
+            showError("音声記録がありません。まず音声を録音してください。")
+            return
+        }
+        
+        isProcessing = true
+        
+        Task {
+            do {
+                // 救急看護師用プロンプトを使用
+                let nursingPrompt = """
+あなたは、看護師がテンプレートを見ながら音声で話した内容をもとに、医療記録を正確かつ簡潔に構造化する役割を担っています。
+
+以下の自然文は、複数回に分けて音声で入力された内容の蓄積です。  
+この情報をもとに、テンプレートの各項目に該当する情報を記入してください。
+
+---
+
+【出力ルール】
+
+1. 入力文に該当する情報があるテンプレート項目は、簡潔に記載してください。
+2. 入力文に該当する記述がまったく見当たらない場合、その項目は「*記載なし*」と明記してください（アスタリスクで囲ってください）。
+3. 意識レベル（GCS）、呼吸数、収縮期血圧の3つがそろっている場合は、qSOFAスコア（0〜3）を自動で算出し、テンプレートの所定位置に記入してください。
+4. 自然文中に「時刻（例：朝7時、10時半など）」と「それに紐づく出来事（例：発症、搬送、飲食、来院など）」が含まれていれば、それらを抽出して時刻順に並べ、テンプレート末尾に「■時系列記録まとめ：」として出力してください。
+5. 入力に含まれない内容を推測・補完しないでください。現場の安全性を重視してください。
+
+---
+
+【自然文（音声入力内容）】
+{transcript}
+
+---
+
+【出力テンプレート構造】
+
+◆ER経過観察記録◆  
+- 搬送（救急車）：  
+- 妊娠：  
+- 付き添い：  
+- 【持ち物】：  
+- 確認者：  
+- 受け取り者：  
+- 【症候】：  
+- 【経過】：  
+- 【既往歴】：  
+- 【アレルギー】：  
+
+＜入退院支援チェックリスト＞  
+- 【キーパーソン】：  
+- 【同居人の有無】：あり／なし／*記載なし*  
+- 【住宅】：自宅／施設（施設形態：）／*記載なし*  
+- 【生活環境】：戸建て／集合住宅 段の利用：あり／なし／*記載なし*  
+- [ADL]：  
+- 【各種手帳】：あり（身体障害／精神障害）／なし／*記載なし*  
+- 【介護認定】：あり／なし／申請中（事業所名／ケアマネジャー：）／*記載なし*  
+- 【利用中のサービス】：あり（内容）／なし／*記載なし*  
+- 【生活保護受給】：あり／なし／*記載なし*  
+　- 担当区：  
+　- 担当者：  
+- 【職業】：  
+- 【障害高齢者の日常生活自立度】：
+　（J1:交通機関利用外出／J2:隣近所外出／A1:介助外出・日中ベッド離れ／A2:外出少・寝起き生活／B1:車椅子移乗・ベッド離れ食事排泄／B2:介助車椅子移乗／C1:自力寝返り／C2:寝返り不可）  
+- 【認知症高齢者の日常生活自立度】：
+　（Ⅰ:自立／Ⅰa:見守り必要家庭外／Ⅰb:見守り必要家庭内／Ⅱa:日中問題行動・介助必要／Ⅱb:夜間問題行動・介助必要／Ⅲ:日常的問題行動・常時介助／Ⅳ:著しい精神症状・専門医療必要）  
+- 来院時間：  
+- 【感染対策】：  
+- 第一印象（ショック兆候）：あり／なし（蒼白、冷感、虚脱、脈拍触知不能、呼吸不全）
+
+■一次評価  
+- A（気道）：  
+- B（呼吸）：呼吸数　回/分 SpO2= %  
+　- 呼吸異常：あり／なし  
+　- 補助筋使用：あり／なし  
+　- 気管偏位：あり／なし  
+　- 頸静脈怒張：あり／なし  
+　- 呼吸音減弱：あり／なし  
+　- 肺副雑音：あり／なし  
+　- 皮下気腫：あり／なし  
+- C（循環）：HR　回/分、BP　mmHg  
+　- チアノーゼ：あり／なし  
+　- CRT：〇秒  
+　- 皮膚の湿潤：あり／なし  
+　- 顔面蒼白：あり／なし  
+- D（意識）：GCS E V M 合計 M  
+- E（体温）：〇°C  
+　- 四肢冷感：あり／なし  
+　- 皮膚湿潤：あり／なし  
+- QSOFA：スコア（0〜3）
+
+【新型コロナウイルススクリーニング】  
+- 過去1ヶ月以内の感染歴：あり／なし  
+- 過去3日以内の陽性者との接触：あり／なし  
+
+■初療  
+- 移動方法：  
+- 名前・生年月日確認：  
+- 最終飲食：  
+- 飲酒：  
+- 喫煙：  
+- 最終排泄：  
+
+【入院・帰宅前チェックリスト】：  
+
+---
+
+■時系列記録まとめ：  
+- HH:MM　出来事（できるだけ簡潔に）
+"""
+                
+                let response = try await openAIService.generateNursingResponse(
+                    prompt: nursingPrompt,
+                    transcripts: currentActiveSession.transcripts
+                )
+                
+                await MainActor.run {
+                    // チャットにAI応答を追加
+                    let message = ChatMessage(content: response, isUser: false, timestamp: Date())
+                    chatMessages.append(message)
+                    
+                    // セッションにAI応答を保存（救急看護記録として）
+                    sessionStore.addNursingResponse(response, to: currentActiveSession)
+                    
+                    lastAIResponse = response
+                    isProcessing = false
+                    showingPromptSelector = false // モーダルを閉じる
+                }
+            } catch {
+                await MainActor.run {
+                    showError(error.localizedDescription)
+                    isProcessing = false
+                }
+            }
+        }
+    }
+    
     private func endSession() {
         // 録音が進行中の場合は停止
         if recordingService.isRecording {
@@ -751,13 +1117,15 @@ struct HelpSectionView: View {
 
 struct MedicalGuideOverlay: View {
     @Binding var isShowing: Bool
-    @State private var selectedCategory: MedicalCategory?
+    let simpleMedicalGuideManager: SimpleMedicalGuideManager
+    @State private var selectedCategory: MedicalGuideCategory?
     @State private var dragOffset: CGFloat = 0
+    @State private var showingGuideSelection = false
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // 全画面の半透明背景（タップ＆スワイプ対応）
+                // 全画面の半透明背景
                 Color.black.opacity(0.3)
                     .ignoresSafeArea(.all)
                     .onTapGesture {
@@ -765,37 +1133,6 @@ struct MedicalGuideOverlay: View {
                             isShowing = false
                         }
                     }
-                    .gesture(
-                        // 背景での左右スワイプジェスチャー
-                        DragGesture()
-                            .onChanged { value in
-                                // 左右スワイプの場合のみ反応
-                                if abs(value.translation.width) > abs(value.translation.height) {
-                                    dragOffset = value.translation.width
-                                }
-                            }
-                            .onEnded { value in
-                                let horizontalDistance = value.translation.width
-                                let horizontalVelocity = abs(value.velocity.width)
-                                
-                                // 左右スワイプで消える（背景でも反応）
-                                if abs(horizontalDistance) > 80 || horizontalVelocity > 400 {
-                                    // ハプティクフィードバック
-                                    let impact = UIImpactFeedbackGenerator(style: .medium)
-                                    impact.impactOccurred()
-                                    
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        isShowing = false
-                                        dragOffset = 0
-                                    }
-                                } else {
-                                    // 元の位置に戻る
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        dragOffset = 0
-                                    }
-                                }
-                            }
-                    )
                 
                 // メインオーバーレイ
                 VStack(spacing: 0) {
@@ -809,13 +1146,13 @@ struct MedicalGuideOverlay: View {
                         // メインコンテンツ
                         ScrollView {
                             LazyVStack(spacing: 12) {
-                                ForEach(MedicalCategory.allCases, id: \.self) { category in
+                                ForEach(simpleMedicalGuideManager.currentCategories) { category in
                                     MedicalCategoryCard(
                                         category: category,
-                                        isSelected: selectedCategory == category
+                                        isSelected: selectedCategory?.id == category.id
                                     ) {
                                         withAnimation(.easeInOut(duration: 0.3)) {
-                                            selectedCategory = selectedCategory == category ? nil : category
+                                            selectedCategory = selectedCategory?.id == category.id ? nil : category
                                         }
                                     }
                                 }
@@ -828,110 +1165,61 @@ struct MedicalGuideOverlay: View {
                     .background(Color(.systemBackground))
                     .medicalCornerRadius(20, corners: [.bottomLeft, .bottomRight])
                     .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-                    .offset(x: dragOffset, y: 0)
-                    .gesture(
-                        // メインコンテンツでの左右スワイプジェスチャー（優先度高）
-                        DragGesture()
-                            .onChanged { value in
-                                // 左右スワイプの場合は横方向の移動を追跡
-                                if abs(value.translation.width) > abs(value.translation.height) {
-                                    dragOffset = value.translation.width
-                                } else {
-                                    // 上下方向は従来通り（下スワイプで閉じる）
-                                    if value.translation.height > 50 {
-                                        dragOffset = value.translation.height * 0.3 // 抵抗感を追加
-                                    }
-                                }
-                            }
-                            .onEnded { value in
-                                let horizontalDistance = value.translation.width
-                                let verticalDistance = value.translation.height
-                                let horizontalVelocity = abs(value.velocity.width)
-                                let verticalVelocity = abs(value.velocity.height)
-                                
-                                // 左右スワイプで消える（メイン機能）
-                                if abs(horizontalDistance) > abs(verticalDistance) {
-                                    if abs(horizontalDistance) > 80 || horizontalVelocity > 400 {
-                                        // ハプティクフィードバック
-                                        let impact = UIImpactFeedbackGenerator(style: .medium)
-                                        impact.impactOccurred()
-                                        
-                                        // スワイプした方向に消える演出
-                                        let exitDirection: CGFloat = horizontalDistance > 0 ? geometry.size.width + 100 : -geometry.size.width - 100
-                                        
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                            dragOffset = exitDirection
-                                        }
-                                        
-                                        // 少し遅れてオーバーレイを閉じる
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                            isShowing = false
-                                            dragOffset = 0
-                                        }
-                                    } else {
-                                        // 元の位置に戻る
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                            dragOffset = 0
-                                        }
-                                    }
-                                }
-                                // 下方向ドラッグで閉じる（補助機能）
-                                else if verticalDistance > 120 || (verticalDistance > 60 && verticalVelocity > 500) {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        isShowing = false
-                                        dragOffset = 0
-                                    }
-                                }
-                                // 元の位置に戻る
-                                else {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        dragOffset = 0
-                                    }
-                                }
-                            }
-                    )
                     
                     Spacer()
                         .frame(height: 120) // フッター分のスペースを確保
                 }
             }
         }
+        .sheet(isPresented: $showingGuideSelection) {
+            MedicalGuideManagerView()
+        }
     }
+    
     
     private var dragHandle: some View {
         VStack(spacing: 6) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color.secondary.opacity(0.5))
                 .frame(width: 36, height: 4)
-            
-            // ドラッグヒント（左右スワイプ用）
-            Text("← 左右スワイプで閉じる →")
-                .font(.caption2)
-                .foregroundColor(.secondary.opacity(0.7))
-                .padding(.top, 2)
         }
         .padding(.top, 8)
         .padding(.bottom, 6)
     }
     
     private var overlayHeaderView: some View {
-        HStack {
-            Button("✕ 閉じる") {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isShowing = false
+        VStack(spacing: 8) {
+            HStack {
+                Button("✕ 閉じる") {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isShowing = false
+                    }
                 }
-            }
-            .foregroundColor(.blue)
-            .font(.subheadline)
-            .fontWeight(.medium)
-            
-            Spacer()
-            
-            Text("医療記録入力ガイド")
+                .foregroundColor(.blue)
                 .font(.subheadline)
-                .fontWeight(.semibold)
-            
-            Spacer()
+                .fontWeight(.medium)
+                
+                Spacer()
+                
+                VStack(spacing: 2) {
+                    Text("医療記録入力ガイド")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    
+                    Text("現在: \(simpleMedicalGuideManager.selectedGuideSet?.name ?? "一般医療")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // ガイド変更ボタン
+                Button("変更") {
+                    showingGuideSelection = true
+                }
+                .foregroundColor(.blue)
+                .font(.caption)
+            }
             
             // 操作ヒント
             Text("背景タップで閉じる")
@@ -947,7 +1235,7 @@ struct MedicalGuideOverlay: View {
 // MARK: - Medical Category Card
 
 struct MedicalCategoryCard: View {
-    let category: MedicalCategory
+    let category: MedicalGuideCategory
     let isSelected: Bool
     let onTap: () -> Void
     
@@ -1008,126 +1296,6 @@ struct MedicalCategoryCard: View {
     }
 }
 
-// MARK: - Medical Category Model
-
-enum MedicalCategory: CaseIterable {
-    case basicInfo
-    case medicalHistory
-    case vitalSigns
-    case physicalExam
-    case diagnostics
-    case treatment
-    
-    var title: String {
-        switch self {
-        case .basicInfo:
-            return "基本情報"
-        case .medicalHistory:
-            return "病歴・既往歴"
-        case .vitalSigns:
-            return "バイタルサイン"
-        case .physicalExam:
-            return "身体所見"
-        case .diagnostics:
-            return "検査・診断"
-        case .treatment:
-            return "治療・方針"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .basicInfo:
-            return "person.fill"
-        case .medicalHistory:
-            return "clock.fill"
-        case .vitalSigns:
-            return "waveform.path.ecg"
-        case .physicalExam:
-            return "stethoscope"
-        case .diagnostics:
-            return "doc.text.magnifyingglass"
-        case .treatment:
-            return "cross.case.fill"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .basicInfo:
-            return .blue
-        case .medicalHistory:
-            return .orange
-        case .vitalSigns:
-            return .green
-        case .physicalExam:
-            return .purple
-        case .diagnostics:
-            return .indigo
-        case .treatment:
-            return .pink
-        }
-    }
-    
-    var items: [String] {
-        switch self {
-        case .basicInfo:
-            return [
-                "年齢",
-                "性別",
-                "居住形態（独居・家族同居など）",
-                "介護度（要支援・要介護など）",
-                "ADL（日常生活動作の自立度）"
-            ]
-        case .medicalHistory:
-            return [
-                "主訴（今回の主な症状・問題）",
-                "現病歴（症状の経過・変化）",
-                "既往歴（過去の病気・手術歴）",
-                "内服薬（現在服用中の薬剤名）",
-                "生活歴（居住形態（施設など）、ADL、喫煙・飲酒）"
-            ]
-        case .vitalSigns:
-            return [
-                "意識レベルGCS（E, V, M）、瞳孔所見など",
-                "血圧（収縮期/拡張期 mmHg）",
-                "脈拍（回/分、リズム）",
-                "SpO2（%、室内気または酸素下）",
-                "酸素投与量（L/分、投与方法）",
-                "呼吸数（回/分）",
-                "体温（℃）"
-            ]
-        case .physicalExam:
-            return [
-                "外観・全身状態",
-                "頭頸部所見",
-                "胸部所見（心音・呼吸音）",
-                "腹部所見",
-                "四肢所見",
-                "皮膚所見",
-                "神経学的所見"
-            ]
-        case .diagnostics:
-            return [
-                "血液検査結果",
-                "画像検査結果（X線・CT・MRIなど）",
-                "心電図所見",
-                "その他の検査結果",
-                "診断名・病名",
-                "病期・重症度"
-            ]
-        case .treatment:
-            return [
-                "治療方針・計画",
-                "処方薬剤の変更",
-                "処置・手技の実施",
-                "患者・家族への説明内容",
-                "今後の予定・フォローアップ",
-                "注意事項・指導内容"
-            ]
-        }
-    }
-}
 
 // MARK: - Extensions for Medical Guide
 
@@ -1150,6 +1318,7 @@ struct MedicalRoundedCorner: Shape {
         return Path(path.cgPath)
     }
 }
+
 
 #Preview {
     let dummySession = Session()

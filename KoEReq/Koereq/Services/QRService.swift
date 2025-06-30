@@ -16,60 +16,72 @@ class QRService: ObservableObject {
     @Published var error: Error?
     @Published var isGenerating = false
     
-    // QRコードの文字数制限を読み取りやすさ重視で設定
-    private let maxCharacters = 500 // 読み取り精度を優先した制限値
+    // QRコードの文字数制限を読み取り精度最優先で設定
+    private let maxCharacters = 300 // 読み取り精度最優先（400から300に減少）
     
     func generateQRCode(from text: String) -> UIImage? {
         print("[QRService] generateQRCode called with text length: \(text.count)")
         
         guard !text.isEmpty else {
-            print("[QRService] Error: Empty text provided")
             self.error = QRError.invalidText
             return nil
         }
         
         guard let data = text.data(using: .utf8) else {
-            print("[QRService] Error: Failed to convert text to UTF8 data")
             self.error = QRError.invalidText
             return nil
         }
         
-        print("[QRService] Text data size: \(data.count) bytes")
-        
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else {
-            print("[QRService] Error: CIQRCodeGenerator filter not available")
             self.error = QRError.filterNotAvailable
             return nil
         }
         
         filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("M", forKey: "inputCorrectionLevel") // Medium error correction for better capacity
+        filter.setValue("H", forKey: "inputCorrectionLevel") // 最高エラー訂正レベル
         
         guard let ciImage = filter.outputImage else {
-            print("[QRService] Error: Failed to generate CIImage")
             self.error = QRError.generationFailed
             return nil
         }
         
-        print("[QRService] CIImage generated successfully, size: \(ciImage.extent)")
+        // 最高速度：シンプルなスケーリング
+        let scale: CGFloat = 10.0
+        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         
-        // QRコードをより高解像度にスケールアップ（読み取り精度向上）
-        let scaleX = 300 / ciImage.extent.size.width  // 200 → 300 に増加
-        let scaleY = 300 / ciImage.extent.size.height
-        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
+        // 最高読み取り精度：適切な白枠
+        let padding: CGFloat = 40.0
+        let finalSize = CGSize(
+            width: scaledImage.extent.width + padding * 2,
+            height: scaledImage.extent.height + padding * 2
+        )
+        
+        // 高速描画
+        UIGraphicsBeginImageContextWithOptions(finalSize, true, 0)
+        UIColor.white.setFill()
+        UIRectFill(CGRect(origin: .zero, size: finalSize))
         
         let context = CIContext()
-        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else {
-            print("[QRService] Error: Failed to create CGImage")
+        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+            UIImage(cgImage: cgImage).draw(in: CGRect(
+                x: padding,
+                y: padding,
+                width: scaledImage.extent.width,
+                height: scaledImage.extent.height
+            ))
+        }
+        
+        let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        guard let result = finalImage else {
             self.error = QRError.renderingFailed
             return nil
         }
         
-        let uiImage = UIImage(cgImage: cgImage)
-        print("[QRService] QR code generated successfully with improved resolution")
-        
-        self.generatedQRCode = uiImage
-        return uiImage
+        print("[QRService] QR code generated successfully")
+        self.generatedQRCode = result
+        return result
     }
     
     func generateQRCodes(from text: String) -> [UIImage] {
@@ -83,7 +95,7 @@ class QRService: ObservableObject {
             print("[QRService] Split into \(textChunks.count) chunks for better readability")
             
             for (index, chunk) in textChunks.enumerated() {
-                let chunkWithHeader = "[\(index + 1)/\(textChunks.count)] \(chunk)"
+                let chunkWithHeader = chunk
                 print("[QRService] Generating QR code \(index + 1)/\(textChunks.count), text length: \(chunkWithHeader.count)")
                 
                 if let qrImage = generateQRCode(from: chunkWithHeader) {
@@ -118,8 +130,8 @@ class QRService: ObservableObject {
         // 改行で分割してから単語で分割
         let paragraphs = text.components(separatedBy: .newlines)
         
-        // ヘッダー分の余裕を考慮した制限（より保守的に）
-        let safeLimit = maxCharacters - 30 // "[X/Y] "分を考慮して30文字余裕
+        // 制限値（少し余裕を持たせる）
+        let safeLimit = maxCharacters - 10 // 少し余裕を持たせる
         
         for paragraph in paragraphs {
             let words = paragraph.components(separatedBy: " ")
@@ -171,22 +183,39 @@ class QRService: ObservableObject {
     
     func generateQRCodesAsync(from text: String) async -> [UIImage] {
         print("[QRService] generateQRCodesAsync called")
-        await MainActor.run {
-            self.isGenerating = true
-        }
         
-        let result = await withCheckedContinuation { continuation in
-            Task { @MainActor in
-                let qrCodes = generateQRCodes(from: text)
-                continuation.resume(returning: qrCodes)
+        isGenerating = true
+        
+        var qrImages: [UIImage] = []
+        
+        // テキストが制限を超えている場合は分割
+        if text.count > maxCharacters {
+            print("[QRService] Text exceeds \(maxCharacters) char limit, splitting into chunks")
+            let textChunks = splitText(text)
+            print("[QRService] Split into \(textChunks.count) chunks")
+            
+            for (index, chunk) in textChunks.enumerated() {
+                let finalText = chunk
+                print("[QRService] Generating QR code \(index + 1)/\(textChunks.count)")
+                
+                if let qrImage = generateQRCode(from: finalText) {
+                    qrImages.append(qrImage)
+                    print("[QRService] QR code \(index + 1) generated successfully")
+                }
+            }
+        } else {
+            print("[QRService] Generating single QR code")
+            if let qrImage = generateQRCode(from: text) {
+                qrImages.append(qrImage)
+                print("[QRService] Single QR code generated successfully")
             }
         }
         
-        await MainActor.run {
-            self.isGenerating = false
-        }
+        isGenerating = false
+        generatedQRCodes = qrImages
         
-        return result
+        print("[QRService] Total QR codes generated: \(qrImages.count)")
+        return qrImages
     }
     
     func saveQRCodeToPhotos(_ image: UIImage) {

@@ -106,6 +106,25 @@ class SessionStore: ObservableObject {
         print("AI Response added to session: \(updatedSession.id)")
     }
     
+    func addNursingResponse(_ content: String, to session: Session) {
+        guard var updatedSession = currentSession else { return }
+        
+        let response = AIResponse(
+            content: content,
+            promptType: .custom(name: "救急看護記録", prompt: "救急看護師専用記録テンプレート"),
+            sequence: updatedSession.aiResponses.count + 1
+        )
+        
+        updatedSession.aiResponses.append(response)
+
+        if let index = sessions.firstIndex(where: { $0.id == updatedSession.id }) {
+            sessions[index] = updatedSession
+        }
+        currentSession = updatedSession
+        saveSessions()
+        print("Nursing Response added to session: \(updatedSession.id)")
+    }
+    
     // MARK: - Local Storage Operations
     
     func reloadSessions() {

@@ -60,7 +60,7 @@ struct LoginView: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
-                            .onChange(of: facilityId) { newValue in
+                            .onChange(of: facilityId) { _, newValue in
                                 // 施設IDに基づいて施設名を自動補完
                                 if let suggested = userManager.getFacilityName(for: newValue.trimmingCharacters(in: .whitespacesAndNewlines)) {
                                     suggestedFacilityName = suggested
@@ -414,7 +414,7 @@ struct FacilityRowView: View {
             
             // 有効/無効切り替えボタン
             Button(action: {
-                userManager.toggleFacilityStatus(facilityId: facility.facilityId)
+                _ = userManager.toggleFacilityStatus(facilityId: facility.facilityId)
             }) {
                 Image(systemName: facility.isActive ? "pause.circle" : "play.circle")
                     .foregroundColor(facility.isActive ? .orange : .green)

@@ -75,7 +75,7 @@ class UserManager: ObservableObject {
     func logout() {
         currentUser = nil
         isLoggedIn = false
-        userDefaults.removeObject(forKey: currentUserKey)
+        // アカウント情報は保持したまま、ログイン状態のみを解除
         print("User logged out")
     }
     
@@ -168,15 +168,25 @@ class UserManager: ObservableObject {
             return
         }
         
-        // 読み込み時にも施設が有効かチェック
-        if let facility = registeredFacilities.first(where: { $0.facilityId == user.facilityId && $0.isActive }) {
-            currentUser = user
-            isLoggedIn = true
-            print("User session restored: \(user.facilityName) (\(user.facilityId))")
+        // 施設が登録されているかチェック
+        if let facility = registeredFacilities.first(where: { $0.facilityId == user.facilityId }) {
+            // 施設が有効な場合はログイン状態を復元
+            if facility.isActive {
+                currentUser = user
+                isLoggedIn = true
+                print("User session restored: \(facility.facilityName) (\(facility.facilityId))")
+            } else {
+                // 施設が無効化されている場合でも、ユーザー情報は保持（ログイン状態のみ解除）
+                currentUser = user
+                isLoggedIn = false
+                print("User found but facility is inactive: \(facility.facilityName) (\(facility.facilityId))")
+            }
         } else {
-            // 無効になった施設のセッションは削除
-            logout()
-            print("Invalid facility session removed: \(user.facilityId)")
+            // 施設が登録リストにない場合のみ完全にクリア
+            currentUser = nil
+            isLoggedIn = false
+            userDefaults.removeObject(forKey: currentUserKey)
+            print("Unregistered facility removed: \(user.facilityId)")
         }
     }
     

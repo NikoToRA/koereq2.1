@@ -177,6 +177,71 @@ class OpenAIService: ObservableObject {
             throw error
         }
     }
+    
+    func generateNursingResponse(prompt: String, transcripts: [TranscriptChunk]) async throws -> String {
+        DispatchQueue.main.async { [weak self] in
+            self?.isGenerating = true
+        }
+        
+        defer {
+            DispatchQueue.main.async { [weak self] in
+                self?.isGenerating = false
+            }
+        }
+        
+        let combinedTranscript = transcripts.map { $0.text }.joined(separator: "\n")
+        let finalPrompt = prompt.replacingOccurrences(of: "{transcript}", with: combinedTranscript)
+        
+        let url = URL(string: "\(endpoint)openai/deployments/\(deploymentName)/chat/completions?api-version=\(apiVersion)")!
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "api-key")
+        
+        let requestBody = OpenAIRequest(
+            messages: [
+                OpenAIMessage(role: "system", content: "あなたは救急看護師の記録作成を支援する専門的なAIアシスタントです。音声記録を構造化された医療記録に変換し、安全性と正確性を最優先に動作します。"),
+                OpenAIMessage(role: "user", content: finalPrompt)
+            ],
+            maxTokens: 3000,
+            temperature: 0.3
+        )
+        
+        do {
+            let jsonData = try JSONEncoder().encode(requestBody)
+            request.httpBody = jsonData
+            
+            print("[OpenAIService DEBUG] Nursing Response Request URL: \(url)")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("[OpenAIService DEBUG] Nursing Response Status Code: \(httpResponse.statusCode)")
+            }
+            
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("[OpenAIService DEBUG] Nursing Response Raw: \(responseString)")
+            }
+            
+            let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+            
+            guard let content = openAIResponse.choices.first?.message.content else {
+                print("[OpenAIService ERROR] No content in nursing response")
+                throw OpenAIError.noContent
+            }
+            
+            print("[OpenAIService SUCCESS] Generated nursing response length: \(content.count) characters")
+            return content
+            
+        } catch {
+            print("[OpenAIService ERROR] Nursing response exception: \(error)")
+            DispatchQueue.main.async { [weak self] in
+                self?.error = error
+            }
+            throw error
+        }
+    }
 }
 
 // MARK: - OpenAI API Models
