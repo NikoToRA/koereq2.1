@@ -18,7 +18,6 @@ struct QRCodeView: View {
     @State private var alertMessage = ""
     @State private var isLoading = true
     @State private var loadingProgress = ""
-    @State private var showCloseButton = false
     
     var body: some View {
         NavigationView {
@@ -36,8 +35,8 @@ struct QRCodeView: View {
                             .multilineTextAlignment(.center)
                         
                         // プレビューでテキストの長さを表示
-                        if content.count > 500 {
-                            Text("読み取りやすさ重視で分割処理中（\(content.count)文字 → 500文字ずつ）")
+                        if content.count > 300 {
+                            Text("読み取り精度最優先で分割処理中（\(content.count)文字 → 300文字ずつ）")
                                 .font(.caption)
                                 .foregroundColor(.orange)
                                 .multilineTextAlignment(.center)
@@ -56,49 +55,33 @@ struct QRCodeView: View {
                     }
                 } else if !qrImages.isEmpty {
                     // QRコード一覧をフルスクリーン表示
-                    GeometryReader { geometry in
-                        ScrollViewReader { proxy in
-                            ScrollView(.vertical, showsIndicators: false) {
-                                LazyVStack(spacing: 60) {
-                                    ForEach(0..<qrImages.count, id: \.self) { index in
-                                        VStack(spacing: 20) {
-                                            // QRコード画像（最大化、番号なし）
-                                            Image(uiImage: qrImages[index])
-                                                .interpolation(.none)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: min(geometry.size.width - 40, 350), 
-                                                       height: min(geometry.size.width - 40, 350))
-                                                .background(Color.white)
-                                                .cornerRadius(20)
-                                                .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
-                                        }
-                                        .id(index)
-                                        .onAppear {
-                                            // 最後のQRコードが表示された時に閉じるボタンを表示
-                                            if index == qrImages.count - 1 {
-                                                withAnimation(.easeInOut(duration: 0.5)) {
-                                                    showCloseButton = true
-                                                }
-                                            }
-                                        }
-                                        .onDisappear {
-                                            // 最後のQRコードが見えなくなったら閉じるボタンを非表示
-                                            if index == qrImages.count - 1 {
-                                                withAnimation(.easeInOut(duration: 0.3)) {
-                                                    showCloseButton = false
-                                                }
-                                            }
-                                        }
-                                    }
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 40) {
+                            ForEach(0..<qrImages.count, id: \.self) { index in
+                                VStack(spacing: 20) {
                                     
-                                    // 余白のみ
-                                    Spacer()
-                                        .frame(height: showCloseButton ? 80 : 20)
+                                    // QRコード画像
+                                    Image(uiImage: qrImages[index])
+                                        .interpolation(.high)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 300, height: 300)
+                                        .background(Color.white)
+                                        .cornerRadius(16)
+                                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                                 }
-                                .padding(.top, 20)
+                                .id(index)
+                                .onAppear {
+                                    print("[QRCodeView] QR code \(index + 1) appeared")
+                                }
                             }
+                            
+                            // 余白
+                            Spacer()
+                                .frame(height: 30)
                         }
+                        .padding(.top, 20)
+                        .padding(.horizontal, 20)
                     }
                 } else {
                     // エラー状態
@@ -126,29 +109,6 @@ struct QRCodeView: View {
                         .padding(.horizontal, 40)
                     }
                 }
-                
-                // 閉じるボタン（最後のQRコードが見えた時のみ）
-                if showCloseButton && !isLoading {
-                    VStack {
-                        Spacer()
-                        
-                        Button(action: { dismiss() }) {
-                            HStack {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
-                                Text("閉じる")
-                                    .font(.headline)
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(25)
-                        }
-                        .padding(.bottom, 30)
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    }
-                }
             }
             .navigationBarHidden(true)
         }
@@ -170,29 +130,36 @@ struct QRCodeView: View {
     
     private func generateQRCodes() {
         print("[QRCodeView] generateQRCodes called with content length: \(content.count)")
+        print("[QRCodeView] Content preview: \(String(content.prefix(100)))...")
         isLoading = true
         qrImages = []
         
         // プレビューでテキストの長さを表示
-        if content.count > 500 {
-            loadingProgress = "読み取りやすさ重視で分割中（\(content.count)文字 → 500文字ずつ）..."
+        if content.count > 300 {
+            loadingProgress = "読み取り精度最優先で分割中（\(content.count)文字 → 300文字ずつ）..."
         } else {
             loadingProgress = "高品質QRコード生成中..."
         }
         
         Task {
+            print("[QRCodeView] Starting async QR generation")
             let images = await qrService.generateQRCodesAsync(from: content)
+            
             await MainActor.run {
                 print("[QRCodeView] Received \(images.count) QR images")
+                
                 if images.isEmpty {
+                    print("[QRCodeView] No images received - showing error")
                     // エラー状態
                     isLoading = false
                     alertMessage = "QRコードの生成に失敗しました。テキストが長すぎるか、システムエラーが発生した可能性があります。"
                     showingAlert = true
                 } else {
+                    print("[QRCodeView] Setting \(images.count) images and updating UI")
                     qrImages = images
                     isLoading = false
                     print("[QRCodeView] QR codes generated successfully: \(images.count) codes")
+                    print("[QRCodeView] isLoading: \(isLoading), qrImages.count: \(qrImages.count)")
                 }
             }
         }
