@@ -18,6 +18,7 @@ struct KoereqApp: App {
     @StateObject var openAIService = OpenAIService()
     @StateObject var storageService = StorageService()
     @StateObject var qrService = QRService()
+    @StateObject var simpleMedicalGuideManager = SimpleMedicalGuideManager()
 
     var body: some Scene {
         WindowGroup {
@@ -31,6 +32,7 @@ struct KoereqApp: App {
                 .environmentObject(openAIService)
                 .environmentObject(storageService)
                 .environmentObject(qrService)
+                .environmentObject(simpleMedicalGuideManager)
         }
     }
 }
