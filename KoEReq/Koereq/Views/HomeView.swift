@@ -102,6 +102,7 @@ struct HomeView: View {
     @State private var showingPromptManager = false
     @State private var showingUserDictionary = false
     @State private var showingMedicalGuideManager = false
+    @State private var showingNursingPromptManager = false
     @State private var navigateToNewSession = false
     @State private var showingAzureStatus = false
     @State private var azureConnectionStatus = "未確認"
@@ -155,6 +156,9 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingMedicalGuideManager) {
             SimpleGuideSelectionView()
+        }
+        .sheet(isPresented: $showingNursingPromptManager) {
+            NursingPromptManagerView()
         }
         .alert("Azure Storage 保存状況", isPresented: $showingAzureStatus) {
             Button("OK") { }
@@ -223,6 +227,15 @@ struct HomeView: View {
                             .font(.caption2)
                     }
                     .foregroundColor(.blue)
+                }
+                
+                Button(action: { showingNursingPromptManager = true }) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "cross.case")
+                        Text("救急看護師")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(.pink)
                 }
                 
                 Button(action: testAzureConnection) {

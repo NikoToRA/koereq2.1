@@ -24,6 +24,10 @@
 		7CE489B22DE02AB9003CDD0E /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489AF2DE02AB9003CDD0E /* Session.swift */; };
 		7CE489B32DE02AB9003CDD0E /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CE489B02DE02AB9003CDD0E /* User.swift */; };
 		7CE48A0A2DE0592F003CDD0E /* APIKeys.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */; };
+		8B4436342E1216EB001A5220 /* MedicalGuideModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4436332E1216EB001A5220 /* MedicalGuideModel.swift */; };
+		8B4436382E121710001A5220 /* MedicalGuideManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4436362E121710001A5220 /* MedicalGuideManagerView.swift */; };
+		8B4436392E121710001A5220 /* MedicalGuideManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4436352E121710001A5220 /* MedicalGuideManager.swift */; };
+		8B44363A2E121A00001A5220 /* NursingPromptManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B44363B2E121A00001A5220 /* NursingPromptManagerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +68,10 @@
 		7CE489AF2DE02AB9003CDD0E /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		7CE489B02DE02AB9003CDD0E /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = APIKeys.xcconfig; sourceTree = "<group>"; };
+		8B4436332E1216EB001A5220 /* MedicalGuideModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalGuideModel.swift; sourceTree = "<group>"; };
+		8B4436352E121710001A5220 /* MedicalGuideManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalGuideManager.swift; sourceTree = "<group>"; };
+		8B4436362E121710001A5220 /* MedicalGuideManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalGuideManagerView.swift; sourceTree = "<group>"; };
+		8B44363B2E121A00001A5220 /* NursingPromptManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NursingPromptManagerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -126,6 +134,9 @@
 		7CE488F22DE024E0003CDD0E = {
 			isa = PBXGroup;
 			children = (
+				8B4436352E121710001A5220 /* MedicalGuideManager.swift */,
+				8B4436362E121710001A5220 /* MedicalGuideManagerView.swift */,
+				8B4436332E1216EB001A5220 /* MedicalGuideModel.swift */,
 				7CE48A092DE0592F003CDD0E /* APIKeys.xcconfig */,
 				7CE489B12DE02AB9003CDD0E /* Models */,
 				7CE489A72DE02AB0003CDD0E /* Services */,
@@ -157,6 +168,7 @@
 				7CE489952DE02AAA003CDD0E /* QRCodeView.swift */,
 				7CE489962DE02AAA003CDD0E /* SessionView.swift */,
 				7CE489972DE02AAA003CDD0E /* UserDictionaryView.swift */,
+				8B44363B2E121A00001A5220 /* NursingPromptManagerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -334,6 +346,7 @@
 				7CE4899B2DE02AAA003CDD0E /* UserDictionaryView.swift in Sources */,
 				7CE4899C2DE02AAA003CDD0E /* QRCodeView.swift in Sources */,
 				7CE489A82DE02AB0003CDD0E /* StorageService.swift in Sources */,
+				8B4436342E1216EB001A5220 /* MedicalGuideModel.swift in Sources */,
 				7CE489A92DE02AB0003CDD0E /* RecordingService.swift in Sources */,
 				7CE489AA2DE02AB0003CDD0E /* QRService.swift in Sources */,
 				7CE489AB2DE02AB0003CDD0E /* PromptManager.swift in Sources */,
@@ -345,6 +358,9 @@
 				7CE489B22DE02AB9003CDD0E /* Session.swift in Sources */,
 				7CE489B32DE02AB9003CDD0E /* User.swift in Sources */,
 				7CE4899F2DE02AAA003CDD0E /* LoginView.swift in Sources */,
+				8B4436382E121710001A5220 /* MedicalGuideManagerView.swift in Sources */,
+				8B4436392E121710001A5220 /* MedicalGuideManager.swift in Sources */,
+				8B44363A2E121A00001A5220 /* NursingPromptManagerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -508,7 +524,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 94TV22FLFY;
+				DEVELOPMENT_TEAM = 9YVVNPFVMW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Koereq/Info.plist;
@@ -539,7 +555,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 94TV22FLFY;
+				DEVELOPMENT_TEAM = 9YVVNPFVMW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Koereq/Info.plist;
